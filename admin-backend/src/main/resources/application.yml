@@ -1,0 +1,70 @@
+server:
+  port: 8001
+  servlet:
+    context-path: /
+
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  profiles:
+    active: local
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  thymeleaf:
+    cache: false
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
+    timeout: 10000
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1
+        max-idle: 8
+        min-idle: 0
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.cool.modules.*.entity
+  global-config:
+    db-config:
+      id-type: auto
+      table-underline: true
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# Cool 配置
+cool:
+  # JWT 配置
+  jwt:
+    secret: cool-admin-secret-key-please-change-in-production
+    expire: 7200
+    refresh-expire: 604800
+  # 安全配置
+  security:
+    ignore:
+      admin-auth-urls:
+        - /admin/base/open/**
+        - /admin/dict/**
+        - /swagger-ui/**
+        - /swagger-resources/**
+        - /v2/api-docs
+        - /v3/api-docs
+        - /webjars/**
+        - /favicon.ico
+        - /error
+  # 日志线程池配置
+  log:
+    max-byte-length: 50000
+    core-pool-size-multiplier: 1
+    max-pool-size-multiplier: 2
+    queue-capacity-multiplier: 10

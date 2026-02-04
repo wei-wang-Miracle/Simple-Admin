@@ -1,0 +1,178 @@
+# ============================================
+# Simple Admin .gitignore
+# 适用于 Java (Spring Boot) + Vue.js 项目
+# ============================================
+
+# ============================================
+# 操作系统文件
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ============================================
+# IDE 编辑器配置
+# ============================================
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Eclipse
+.classpath
+.project
+.settings/
+.apt_generated
+.factorypath
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+
+# ============================================
+# 后端 (Java/Spring Boot)
+# ============================================
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Spring Boot
+*.log
+*.log.*
+logs/
+
+# H2 Database
+*.db
+
+# ============================================
+# 前端 (Vue.js/Node.js)
+# ============================================
+
+# 依赖目录
+node_modules/
+.pnpm-store/
+
+# 构建输出
+dist/
+dist-ssr/
+*.local
+
+# 日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Vite
+*.local
+
+# TypeScript
+*.tsbuildinfo
+
+# ============================================
+# 环境与配置文件
+# ============================================
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# 配置文件（包含敏感信息）
+application-local.yml
+application-prod.yml
+
+# ============================================
+# 缓存与临时文件
+# ============================================
+
+# 系统缓存
+.cache/
+.temp/
+.tmp/
+*.tmp
+*.temp
+
+# npm/pnpm/yarn 缓存
+.npm/
+.yarn/
+
+# ESLint/Prettier 缓存
+.eslintcache
+.prettiercache
+
+# Vite 缓存
+.vite/
+
+# ============================================
+# 测试与覆盖率
+# ============================================
+
+# 测试覆盖率
+coverage/
+*.lcov
+.nyc_output
+
+# ============================================
+# 其他
+# ============================================
+
+# 压缩文件
+*.zip
+*.rar
+*.tar
+*.tar.gz
+*.7z
+
+# 上传文件目录
+uploads/
+assets/
+lib/
+plugin/
+
+# 运行时数据
+*.pid
+*.seed
+*.pid.lock
+
+# 文档生成
+docs/_build/
+
+# 备份文件
+*.bak
+*.backup
