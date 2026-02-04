@@ -1,8 +1,8 @@
 package com.simple.modules.base.controller.admin.sys;
 
 import cn.hutool.core.lang.Dict;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.simple.core.request.RestResult;
 import com.simple.modules.base.entity.sys.SysUserEntity;
 import com.simple.modules.base.service.sys.SysPermsService;
@@ -71,22 +71,23 @@ public class SysUserController {
         int page = params.get("page") != null ? Integer.parseInt(params.get("page").toString()) : 1;
         int size = params.get("size") != null ? Integer.parseInt(params.get("size").toString()) : 15;
 
-        LambdaQueryWrapper<SysUserEntity> wrapper = new LambdaQueryWrapper<>();
+        QueryWrapper wrapper = QueryWrapper.create();
         // 部门过滤
         if (params.get("departmentIds") != null) {
             List<Long> departmentIds = ((List<?>) params.get("departmentIds")).stream()
                     .map(id -> Long.parseLong(id.toString()))
                     .collect(Collectors.toList());
-            wrapper.in(SysUserEntity::getDepartmentId, departmentIds);
+            wrapper.where(SysUserEntity::getDepartmentId).in(departmentIds);
         }
         // 关键词搜索
         if (params.get("keyWord") != null) {
             String keyWord = params.get("keyWord").toString();
-            wrapper.and(w -> w.like(SysUserEntity::getUsername, keyWord)
-                    .or().like(SysUserEntity::getName, keyWord)
-                    .or().like(SysUserEntity::getPhone, keyWord));
+            // 使用 QueryMethods.column 显式构造查询条件，避免 Lambda 歧义
+            wrapper.and(com.mybatisflex.core.query.QueryMethods.column("username").like(keyWord)
+                    .or(com.mybatisflex.core.query.QueryMethods.column("name").like(keyWord))
+                    .or(com.mybatisflex.core.query.QueryMethods.column("phone").like(keyWord)));
         }
-        wrapper.orderByDesc(SysUserEntity::getCreateTime);
+        wrapper.orderBy(SysUserEntity::getCreateTime).desc();
 
         Page<SysUserEntity> pageResult = baseSysUserService.page(new Page<>(page, size), wrapper);
         // 清除敏感信息
@@ -95,9 +96,9 @@ public class SysUserController {
         return RestResult.ok(Dict.create()
                 .set("list", pageResult.getRecords())
                 .set("pagination", Dict.create()
-                        .set("page", pageResult.getCurrent())
-                        .set("size", pageResult.getSize())
-                        .set("total", pageResult.getTotal())));
+                        .set("page", pageResult.getPageNumber())
+                        .set("size", pageResult.getPageSize())
+                        .set("total", pageResult.getTotalRow())));
     }
 
     @ApiOperation("移动用户到指定部门")

@@ -57,4 +57,21 @@ public class AdminBaseCommController {
         baseSysLoginService.logout(adminUserId, adminUsername);
         return RestResult.ok();
     }
+
+    @ApiOperation("获取上传模式")
+    @GetMapping("/uploadMode")
+    public RestResult uploadMode() {
+        // 获取上传模式：local 为本地上传
+        String mode = fileUploadStrategyFactory.getMode();
+        return RestResult.ok(Dict.create().set("mode", mode).set("type", mode));
+    }
+
+    @ApiOperation("文件上传")
+    @PostMapping("/upload")
+    public RestResult upload(@RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+                             javax.servlet.http.HttpServletRequest request) {
+        // 使用文件上传策略工厂处理上传
+        Object result = fileUploadStrategyFactory.upload(new org.springframework.web.multipart.MultipartFile[]{file}, request);
+        return RestResult.ok(result);
+    }
 }

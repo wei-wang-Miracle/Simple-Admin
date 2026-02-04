@@ -1,8 +1,8 @@
 package com.simple.modules.base.controller.admin.sys;
 
 import cn.hutool.core.lang.Dict;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.simple.core.request.RestResult;
 import com.simple.modules.base.entity.sys.SysMenuEntity;
 import com.simple.modules.base.service.sys.SysMenuService;
@@ -58,8 +58,8 @@ public class SysMenuController {
     @ApiOperation("列表")
     @PostMapping("/list")
     public RestResult list(@RequestBody(required = false) Map<String, Object> params) {
-        LambdaQueryWrapper<SysMenuEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.orderByAsc(SysMenuEntity::getOrderNum);
+        QueryWrapper wrapper = QueryWrapper.create()
+                .orderBy(SysMenuEntity::getOrderNum, true);
         return RestResult.ok(baseSysMenuService.list(wrapper));
     }
 
@@ -69,22 +69,22 @@ public class SysMenuController {
         int page = params.get("page") != null ? Integer.parseInt(params.get("page").toString()) : 1;
         int size = params.get("size") != null ? Integer.parseInt(params.get("size").toString()) : 15;
 
-        LambdaQueryWrapper<SysMenuEntity> wrapper = new LambdaQueryWrapper<>();
+        QueryWrapper wrapper = QueryWrapper.create();
         // 关键词搜索
         if (params.get("keyWord") != null) {
             String keyWord = params.get("keyWord").toString();
-            wrapper.like(SysMenuEntity::getName, keyWord);
+            wrapper.where(SysMenuEntity::getName).like(keyWord);
         }
-        wrapper.orderByAsc(SysMenuEntity::getOrderNum);
+        wrapper.orderBy(SysMenuEntity::getOrderNum, true);
 
         Page<SysMenuEntity> pageResult = baseSysMenuService.page(new Page<>(page, size), wrapper);
 
         return RestResult.ok(Dict.create()
                 .set("list", pageResult.getRecords())
                 .set("pagination", Dict.create()
-                        .set("page", pageResult.getCurrent())
-                        .set("size", pageResult.getSize())
-                        .set("total", pageResult.getTotal())));
+                        .set("page", pageResult.getPageNumber())
+                        .set("size", pageResult.getPageSize())
+                        .set("total", pageResult.getTotalRow())));
     }
 
     private List<Long> getIds(Map<String, Object> params) {

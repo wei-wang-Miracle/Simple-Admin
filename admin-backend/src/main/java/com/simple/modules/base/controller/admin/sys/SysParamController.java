@@ -1,8 +1,8 @@
 package com.simple.modules.base.controller.admin.sys;
 
 import cn.hutool.core.lang.Dict;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.simple.core.request.RestResult;
 import com.simple.modules.base.entity.sys.SysParamEntity;
 import com.simple.modules.base.service.sys.SysParamService;
@@ -61,23 +61,23 @@ public class SysParamController {
         int page = params.get("page") != null ? Integer.parseInt(params.get("page").toString()) : 1;
         int size = params.get("size") != null ? Integer.parseInt(params.get("size").toString()) : 15;
 
-        LambdaQueryWrapper<SysParamEntity> wrapper = new LambdaQueryWrapper<>();
+        QueryWrapper wrapper = QueryWrapper.create();
         // 关键词搜索
         if (params.get("keyWord") != null) {
             String keyWord = params.get("keyWord").toString();
-            wrapper.like(SysParamEntity::getName, keyWord)
-                    .or().like(SysParamEntity::getKeyName, keyWord);
+            wrapper.where(SysParamEntity::getName).like(keyWord)
+                    .or(SysParamEntity::getKeyName).like(keyWord);
         }
-        wrapper.orderByDesc(SysParamEntity::getCreateTime);
+        wrapper.orderBy(SysParamEntity::getCreateTime).desc();
 
         Page<SysParamEntity> pageResult = baseSysParamService.page(new Page<>(page, size), wrapper);
 
         return RestResult.ok(Dict.create()
                 .set("list", pageResult.getRecords())
                 .set("pagination", Dict.create()
-                        .set("page", pageResult.getCurrent())
-                        .set("size", pageResult.getSize())
-                        .set("total", pageResult.getTotal())));
+                        .set("page", pageResult.getPageNumber())
+                        .set("size", pageResult.getPageSize())
+                        .set("total", pageResult.getTotalRow())));
     }
 
     @ApiOperation("根据key获取数据")

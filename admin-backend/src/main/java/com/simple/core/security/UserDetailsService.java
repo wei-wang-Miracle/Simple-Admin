@@ -1,6 +1,6 @@
 package com.simple.core.security;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.simple.core.cache.CacheUtil;
 import com.simple.core.security.jwt.JwtUser;
 import com.simple.modules.base.entity.sys.SysUserEntity;
@@ -30,9 +30,9 @@ public class UserDetailsService implements org.springframework.security.core.use
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        LambdaQueryWrapper<SysUserEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysUserEntity::getUsername, username);
-        SysUserEntity user = sysUserMapper.selectOne(wrapper);
+        QueryWrapper wrapper = QueryWrapper.create()
+                .where(SysUserEntity::getUsername).eq(username);
+        SysUserEntity user = sysUserMapper.selectOneByQuery(wrapper);
 
         if (user == null) {
             throw new UsernameNotFoundException("用户不存在");

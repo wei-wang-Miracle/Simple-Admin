@@ -10,10 +10,10 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.cool.core.annotation.ColumnDefine;
-import com.cool.core.annotation.EpsField;
-import com.cool.core.annotation.TokenIgnore;
-import com.cool.core.config.CustomOpenApiResource;
+import com.simple.core.annotation.ColumnDefine;
+import com.simple.core.annotation.EpsField;
+import com.simple.core.annotation.TokenIgnore;
+import com.simple.core.config.CustomOpenApiResource;
 import com.mybatisflex.annotation.Table;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -400,12 +400,19 @@ public class EpsPower {
      * @return JavaScript类型
      */
     private String matchType(String type) {
-        return switch (type) {
-            case "java.lang.Boolean" -> "boolean";
-            case "java.lang.Long", "java.lang.Integer", "java.lang.Short", "java.lang.Float",
-                 "java.lang.Double" -> "number";
-            case "java.util.Date" -> "date";
-            default -> "string";
-        };
+        switch (type) {
+            case "java.lang.Boolean":
+                return "boolean";
+            case "java.lang.Long":
+            case "java.lang.Integer":
+            case "java.lang.Short":
+            case "java.lang.Float":
+            case "java.lang.Double":
+                return "number";
+            case "java.util.Date":
+                return "date";
+            default:
+                return "string";
+        }
     }
 }

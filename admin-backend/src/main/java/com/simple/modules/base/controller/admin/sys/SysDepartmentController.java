@@ -1,7 +1,7 @@
 package com.simple.modules.base.controller.admin.sys;
 
 import cn.hutool.core.lang.Dict;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.simple.core.request.RestResult;
 import com.simple.modules.base.entity.sys.SysDepartmentEntity;
 import com.simple.modules.base.service.sys.SysDepartmentService;
@@ -57,6 +57,9 @@ public class SysDepartmentController {
     @ApiOperation("列表")
     @PostMapping("/list")
     public RestResult list(@RequestBody(required = false) Map<String, Object> params) {
+        // 创建查询条件，按排序号升序
+        QueryWrapper wrapper = QueryWrapper.create()
+                .orderBy(SysDepartmentEntity::getOrderNum, true);
         List<SysDepartmentEntity> list = sysDepartmentService.list(wrapper);
         return RestResult.ok(list);
     }

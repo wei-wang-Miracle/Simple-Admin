@@ -1,6 +1,6 @@
 package com.simple.core.handler;
 
-import com.cool.core.util.DatabaseDialectUtils;
+import com.simple.core.util.DatabaseDialectUtils;
 import com.mybatisflex.core.util.StringUtil;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;

@@ -2,7 +2,7 @@ package com.simple.modules.base.service.sys.impl;
 
 import cn.hutool.core.lang.Dict;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.mybatisflex.core.update.UpdateChain;
 import com.simple.core.base.BaseServiceImpl;
 import com.simple.modules.base.entity.sys.SysUserEntity;
 import com.simple.modules.base.mapper.sys.SysDepartmentMapper;
@@ -35,10 +35,10 @@ public class SysUserServiceImpl
         if (userIds == null || userIds.length == 0) {
             return;
         }
-        LambdaUpdateWrapper<SysUserEntity> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.in(SysUserEntity::getId, Arrays.asList(userIds))
-                .set(SysUserEntity::getDepartmentId, departmentId);
-        this.update(wrapper);
+        UpdateChain.of(SysUserEntity.class)
+                .set(SysUserEntity::getDepartmentId, departmentId)
+                .where(SysUserEntity::getId).in(Arrays.asList(userIds))
+                .update();
     }
 
     @Override

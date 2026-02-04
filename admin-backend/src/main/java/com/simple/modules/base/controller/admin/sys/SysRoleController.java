@@ -1,8 +1,8 @@
 package com.simple.modules.base.controller.admin.sys;
 
 import cn.hutool.core.lang.Dict;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.simple.core.request.RestResult;
 import com.simple.core.util.SecurityUtil;
 import com.simple.modules.base.entity.sys.SysRoleEntity;
@@ -13,10 +13,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -68,14 +65,14 @@ public class SysRoleController {
     @ApiOperation("列表")
     @PostMapping("/list")
     public RestResult list(@RequestBody(required = false) Map<String, Object> params) {
-        LambdaQueryWrapper<SysRoleEntity> wrapper = new LambdaQueryWrapper<>();
+        QueryWrapper wrapper = QueryWrapper.create();
         // 非 admin 用户只能看到自己创建的角色
         Long adminUserId = SecurityUtil.getCurrentUserId();
         SysUserEntity user = baseSysUserService.getById(adminUserId);
         if (user != null && !"admin".equals(user.getUsername())) {
-            wrapper.eq(SysRoleEntity::getUserId, adminUserId);
+            wrapper.where(SysRoleEntity::getUserId).eq(adminUserId);
         }
-        wrapper.orderByDesc(SysRoleEntity::getCreateTime);
+        wrapper.orderBy(SysRoleEntity::getCreateTime).desc();
         return RestResult.ok(baseSysRoleService.list(wrapper));
     }
 
@@ -85,28 +82,28 @@ public class SysRoleController {
         int page = params.get("page") != null ? Integer.parseInt(params.get("page").toString()) : 1;
         int size = params.get("size") != null ? Integer.parseInt(params.get("size").toString()) : 15;
 
-        LambdaQueryWrapper<SysRoleEntity> wrapper = new LambdaQueryWrapper<>();
+        QueryWrapper wrapper = QueryWrapper.create();
         // 非 admin 用户只能看到自己创建的角色
         Long adminUserId = SecurityUtil.getCurrentUserId();
         SysUserEntity user = baseSysUserService.getById(adminUserId);
         if (user != null && !"admin".equals(user.getUsername())) {
-            wrapper.eq(SysRoleEntity::getUserId, adminUserId);
+            wrapper.where(SysRoleEntity::getUserId).eq(adminUserId);
         }
         // 关键词搜索
         if (params.get("keyWord") != null) {
             String keyWord = params.get("keyWord").toString();
-            wrapper.like(SysRoleEntity::getName, keyWord);
+            wrapper.where(SysRoleEntity::getName).like(keyWord);
         }
-        wrapper.orderByDesc(SysRoleEntity::getCreateTime);
+        wrapper.orderBy(SysRoleEntity::getCreateTime).desc();
 
         Page<SysRoleEntity> pageResult = baseSysRoleService.page(new Page<>(page, size), wrapper);
 
         return RestResult.ok(Dict.create()
                 .set("list", pageResult.getRecords())
                 .set("pagination", Dict.create()
-                        .set("page", pageResult.getCurrent())
-                        .set("size", pageResult.getSize())
-                        .set("total", pageResult.getTotal())));
+                        .set("page", pageResult.getPageNumber())
+                        .set("size", pageResult.getPageSize())
+                        .set("total", pageResult.getTotalRow())));
     }
 
     private List<Long> getIds(Map<String, Object> params) {

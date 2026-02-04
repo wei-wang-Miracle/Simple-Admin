@@ -1,8 +1,8 @@
 package com.simple.modules.base.controller.admin.sys;
 
 import cn.hutool.core.lang.Dict;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.simple.core.request.RestResult;
 import com.simple.modules.base.entity.sys.SysLogEntity;
 import com.simple.modules.base.service.sys.SysLogService;
@@ -24,28 +24,45 @@ public class SysLogController {
 
 	private final SysLogService baseSysLogService;
 
+	// 日志保存天数（简易实现，存储在 Controller 层）
+	private static Integer logKeepDays = 90;
+
+	@ApiOperation("设置日志保存天数")
+	@PostMapping("/setKeep")
+	public RestResult setKeep(@RequestBody Map<String, Object> params) {
+		Integer value = Integer.parseInt(params.get("value").toString());
+		logKeepDays = value;
+		return RestResult.ok();
+	}
+
+	@ApiOperation("获取日志保存天数")
+	@GetMapping("/getKeep")
+	public RestResult getKeep() {
+		return RestResult.ok(logKeepDays);
+	}
+
 	@ApiOperation("分页")
 	@PostMapping("/page")
 	public RestResult page(@RequestBody Map<String, Object> params) {
 		int page = params.get("page") != null ? Integer.parseInt(params.get("page").toString()) : 1;
 		int size = params.get("size") != null ? Integer.parseInt(params.get("size").toString()) : 15;
 
-		LambdaQueryWrapper<SysLogEntity> wrapper = new LambdaQueryWrapper<>();
+		QueryWrapper wrapper = QueryWrapper.create();
 		// 关键词搜索
 		if (params.get("keyWord") != null) {
 			String keyWord = params.get("keyWord").toString();
-			wrapper.like(SysLogEntity::getAction, keyWord);
+			wrapper.where(SysLogEntity::getAction).like(keyWord);
 		}
-		wrapper.orderByDesc(SysLogEntity::getCreateTime);
+		wrapper.orderBy(SysLogEntity::getCreateTime).desc();
 
 		Page<SysLogEntity> pageResult = baseSysLogService.page(new Page<>(page, size), wrapper);
 
 		return RestResult.ok(Dict.create()
 				.set("list", pageResult.getRecords())
 				.set("pagination", Dict.create()
-						.set("page", pageResult.getCurrent())
-						.set("size", pageResult.getSize())
-						.set("total", pageResult.getTotal())));
+						.set("page", pageResult.getPageNumber())
+						.set("size", pageResult.getPageSize())
+						.set("total", pageResult.getTotalRow())));
 	}
 
 	@ApiOperation("清理日志")
