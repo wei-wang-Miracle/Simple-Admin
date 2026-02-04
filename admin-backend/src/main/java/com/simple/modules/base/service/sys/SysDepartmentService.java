@@ -1,0 +1,19 @@
+package com.simple.modules.base.service.sys;
+
+import com.simple.core.base.BaseService;
+import com.simple.modules.base.entity.sys.SysDepartmentEntity;
+
+import java.util.List;
+
+/**
+ * 系统部门 Service
+ */
+public interface SysDepartmentService extends BaseService<SysDepartmentEntity> {
+
+    /**
+     * 排序
+     *
+     * @param list 部门列表
+     */
+    void order(List<SysDepartmentEntity> list);
+}

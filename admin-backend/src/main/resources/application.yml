@@ -33,7 +33,7 @@ spring:
 # MyBatis-Plus 配置
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
-  type-aliases-package: com.cool.modules.*.entity
+  type-aliases-package: com.simple.modules.*.entity
   global-config:
     db-config:
       id-type: auto
@@ -41,12 +41,10 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-
-# Cool 配置
-cool:
+simple:
   # JWT 配置
   jwt:
-    secret: cool-admin-secret-key-please-change-in-production
+    secret: simple-admin-secret-key-please-change-in-production
     expire: 7200
     refresh-expire: 604800
   # 安全配置
