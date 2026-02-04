@@ -1,7 +1,10 @@
 package com.simple.core.security;
 
+import com.simple.core.filter.BaseLogFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,7 +35,7 @@ public class JwtSecurityConfig extends WebSecurityConfigurerAdapter {
     private final EntryPointUnauthorizedHandler entryPointUnauthorizedHandler;
     private final RestAccessDeniedHandler restAccessDeniedHandler;
     private final UserDetailsService userDetailsService;
-    private final javax.servlet.Filter baseLogFilter;
+    private final BaseLogFilter baseLogFilter;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -53,8 +56,8 @@ public class JwtSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 // 添加 JWT 过滤器
                 .addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                // 添加日志记录过滤器
-                .addFilterBefore(baseLogFilter, UsernamePasswordAuthenticationFilter.class)
+                // 添加日志记录过滤器（在JWT过滤器之后，确保SecurityContext已设置）
+                .addFilterAfter(baseLogFilter, JwtAuthenticationTokenFilter.class)
                 // 异常处理
                 .exceptionHandling()
                 .authenticationEntryPoint(entryPointUnauthorizedHandler)

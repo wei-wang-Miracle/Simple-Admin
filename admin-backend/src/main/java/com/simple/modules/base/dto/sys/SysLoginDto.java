@@ -1,19 +1,22 @@
 package com.simple.modules.base.dto.sys;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+
+import javax.validation.constraints.NotBlank;
 
 /**
  * 登录 DTO
  */
 @Data
-@ApiModel(description = "登录请求参数")
+@Schema(description = "登录参数")
 public class SysLoginDto {
 
-    @ApiModelProperty(value = "用户名", required = true)
+    @Schema(description = "用户名")
+    @NotBlank
     private String username;
 
-    @ApiModelProperty(value = "密码", required = true)
+    @Schema(description = "密码")
+    @NotBlank
     private String password;
 }

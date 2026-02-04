@@ -1,9 +1,10 @@
 package com.simple.modules.base.service.sys.impl;
 
+import cn.hutool.core.convert.Convert;
 import cn.hutool.core.lang.Dict;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import cn.hutool.jwt.JWT;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.simple.core.enums.UserTypeEnum;
 import com.simple.core.exception.SimplePreconditions;
 import com.simple.core.security.jwt.JwtTokenUtil;
@@ -13,7 +14,6 @@ import com.simple.modules.base.entity.sys.SysUserEntity;
 import com.simple.modules.base.mapper.sys.SysUserMapper;
 import com.simple.modules.base.service.sys.SysLoginService;
 import com.simple.modules.base.service.sys.SysPermsService;
-import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,71 +28,60 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SysLoginServiceImpl implements SysLoginService {
 
-	private final AuthenticationManager authenticationManager;
-	private final JwtTokenUtil jwtTokenUtil;
-	private final SysUserMapper sysUserMapper;
-	private final SysPermsService sysPermsService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenUtil jwtTokenUtil;
+    private final SysUserMapper sysUserMapper;
+    private final SysPermsService sysPermsService;
 
-	@Override
-	public Object login(SysLoginDto sysLoginDto) {
-		// 1、执行登录认证
-		UsernamePasswordAuthenticationToken upToken = new UsernamePasswordAuthenticationToken(
-				sysLoginDto.getUsername(), sysLoginDto.getPassword());
-		Authentication authentication = authenticationManager.authenticate(upToken);
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+    @Override
+    public Object login(SysLoginDto baseSysLoginDto) {
+        // 1、检查验证码是否正确 2、执行登录操作
+        UsernamePasswordAuthenticationToken upToken =
+                new UsernamePasswordAuthenticationToken(
+                        baseSysLoginDto.getUsername(), baseSysLoginDto.getPassword());
+        Authentication authentication = authenticationManager.authenticate(upToken);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        // 查询用户信息并生成token
+        SysUserEntity baseSysUserEntity =
+                sysUserMapper.selectOneByQuery(
+                        QueryWrapper.create()
+                                .eq(SysUserEntity::getUsername, baseSysLoginDto.getUsername()));
+        Long[] roleIds = sysPermsService.getRoles(baseSysUserEntity);
+        return generateToken(roleIds, baseSysUserEntity, null);
+    }
 
-		// 2、查询用户信息
-		LambdaQueryWrapper<SysUserEntity> wrapper = new LambdaQueryWrapper<>();
-		wrapper.eq(SysUserEntity::getUsername, sysLoginDto.getUsername());
-		SysUserEntity sysUserEntity = sysUserMapper.selectOne(wrapper);
+    @Override
+    public void logout(Long adminUserId, String username) {
+        SecurityUtil.adminLogout(adminUserId, username);
+    }
 
-		SimplePreconditions.check(
-				ObjectUtil.isEmpty(sysUserEntity) || sysUserEntity.getStatus() == 0,
-				"用户已禁用");
+    @Override
+    public Object refreshToken(String refreshToken) {
+        JWT jwt = jwtTokenUtil.getTokenInfo(refreshToken);
+        SimplePreconditions.check(jwt == null || !(Boolean) jwt.getPayload("isRefresh"),
+                "错误的refreshToken");
+        SysUserEntity baseSysUserEntity =
+                sysUserMapper.selectOneById(Convert.toLong(jwt.getPayload("userId")));
+        Long[] roleIds = sysPermsService.getRoles(baseSysUserEntity);
+        return generateToken(roleIds, baseSysUserEntity, refreshToken);
+    }
 
-		// 3、生成token
-		Long[] roleIds = sysPermsService.getRoles(sysUserEntity);
-
-		return generateToken(roleIds, sysUserEntity, null);
-	}
-
-	@Override
-	public void logout(Long adminUserId, String username) {
-		SecurityUtil.adminLogout(adminUserId, username);
-	}
-
-	@Override
-	public Object refreshToken(String refreshToken) {
-		SimplePreconditions.check(!jwtTokenUtil.validateRefreshToken(refreshToken), "错误的refreshToken");
-
-		Claims claims = jwtTokenUtil.getTokenInfo(refreshToken);
-		SimplePreconditions.check(claims == null || !Boolean.TRUE.equals(claims.get("isRefresh")),
-				"错误的refreshToken");
-
-		Long userId = Long.valueOf(claims.get("userId").toString());
-		SysUserEntity sysUserEntity = sysUserMapper.selectById(userId);
-		Long[] roleIds = sysPermsService.getRoles(sysUserEntity);
-
-		return generateToken(roleIds, sysUserEntity, refreshToken);
-	}
-
-	private Dict generateToken(Long[] roleIds, SysUserEntity sysUserEntity, String refreshToken) {
-		Dict tokenInfo = Dict.create()
-				.set("userType", UserTypeEnum.ADMIN.name())
-				.set("roleIds", roleIds)
-				.set("username", sysUserEntity.getUsername())
-				.set("userId", sysUserEntity.getId())
-				.set("passwordVersion", sysUserEntity.getPasswordV());
-
-		String token = jwtTokenUtil.generateToken(tokenInfo);
-		if (StrUtil.isEmpty(refreshToken)) {
-			refreshToken = jwtTokenUtil.generateRefreshToken(tokenInfo);
-		}
-
-		return Dict.create()
-				.set("token", token)
-				.set("expire", jwtTokenUtil.getExpire())
-				.set("refreshToken", refreshToken)
-				.set("refreshExpire", jwtTokenUtil.getRefreshExpire());
-	}
+    private Dict generateToken(Long[] roleIds, SysUserEntity baseSysUserEntity, String refreshToken) {
+        Dict tokenInfo =
+                Dict.create()
+                        .set("userType", UserTypeEnum.ADMIN.name())
+                        .set("roleIds", roleIds)
+                        .set("username", baseSysUserEntity.getUsername())
+                        .set("userId", baseSysUserEntity.getId())
+                        .set("passwordVersion", baseSysUserEntity.getPasswordV());
+        String token = jwtTokenUtil.generateToken(tokenInfo);
+        if (StrUtil.isEmpty(refreshToken)) {
+            refreshToken = jwtTokenUtil.generateRefreshToken(tokenInfo);
+        }
+        return Dict.create()
+                .set("token", token)
+                .set("expire", jwtTokenUtil.getExpire())
+                .set("refreshToken", refreshToken)
+                .set("refreshExpire", jwtTokenUtil.getRefreshExpire());
+    }
 }

@@ -87,20 +87,6 @@ public class SysMenuController {
                         .set("total", pageResult.getTotal())));
     }
 
-    @ApiOperation("导出")
-    @PostMapping("/export")
-    public RestResult export(@RequestBody Map<String, Object> params) {
-        List<Long> ids = getIds(params);
-        return RestResult.ok(baseSysMenuService.export(ids));
-    }
-
-    @ApiOperation("导入")
-    @PostMapping("/import")
-    public RestResult importMenu(@RequestBody List<SysMenuEntity> menus) {
-        baseSysMenuService.importMenu(menus);
-        return RestResult.ok();
-    }
-
     private List<Long> getIds(Map<String, Object> params) {
         Object ids = params.get("ids");
         if (ids instanceof List) {

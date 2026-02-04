@@ -57,8 +57,6 @@ public class SysDepartmentController {
     @ApiOperation("列表")
     @PostMapping("/list")
     public RestResult list(@RequestBody(required = false) Map<String, Object> params) {
-        LambdaQueryWrapper<SysDepartmentEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.orderByAsc(SysDepartmentEntity::getOrderNum);
         List<SysDepartmentEntity> list = sysDepartmentService.list(wrapper);
         return RestResult.ok(list);
     }

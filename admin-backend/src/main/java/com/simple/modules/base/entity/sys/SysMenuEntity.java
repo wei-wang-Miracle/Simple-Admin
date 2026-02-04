@@ -1,86 +1,54 @@
 package com.simple.modules.base.entity.sys;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.mybatisflex.annotation.Column;
+import com.mybatisflex.annotation.Table;
+import com.simple.core.annotation.ColumnDefine;
 import com.simple.core.base.BaseEntity;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.List;
 
 /**
  * 系统菜单实体类
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
-@TableName("base_sys_menu")
-@ApiModel(description = "系统菜单")
-public class SysMenuEntity extends BaseEntity {
-
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * 父菜单ID
-     */
-    @TableField("parent_id")
-    @ApiModelProperty(value = "父菜单ID")
+@Getter
+@Setter
+@Table(value = "base_sys_menu", comment = "系统菜单表")
+public class SysMenuEntity extends BaseEntity<SysMenuEntity> {
+    @ColumnDefine(comment = "父菜单ID", type = "bigint")
     private Long parentId;
 
-    /**
-     * 菜单名称
-     */
-    @ApiModelProperty(value = "菜单名称")
+    @ColumnDefine(comment = "菜单名称")
     private String name;
 
-    /**
-     * 权限
-     */
-    @ApiModelProperty(value = "权限")
+    @ColumnDefine(comment = "权限", type = "text")
     private String perms;
 
-    /**
-     * 类型 0：目录 1：菜单 2：按钮
-     */
-    @ApiModelProperty(value = "类型 0：目录 1：菜单 2：按钮")
+    @ColumnDefine(comment = "类型 0：目录 1：菜单 2：按钮", defaultValue = "0")
     private Integer type;
 
-    /**
-     * 图标
-     */
-    @ApiModelProperty(value = "图标")
+    @ColumnDefine(comment = "图标")
     private String icon;
 
-    /**
-     * 排序
-     */
-    @TableField("order_num")
-    @ApiModelProperty(value = "排序")
+    @ColumnDefine(comment = "排序", defaultValue = "0")
     private Integer orderNum;
 
-    /**
-     * 菜单地址
-     */
-    @ApiModelProperty(value = "菜单地址")
+    @ColumnDefine(comment = "菜单地址")
     private String router;
 
-    /**
-     * 视图地址
-     */
-    @TableField("view_path")
-    @ApiModelProperty(value = "视图地址")
+    @ColumnDefine(comment = "视图地址")
     private String viewPath;
 
-    /**
-     * 路由缓存
-     */
-    @TableField("keep_alive")
-    @ApiModelProperty(value = "路由缓存")
+    @ColumnDefine(comment = "路由缓存", defaultValue = "true")
     private Boolean keepAlive;
 
-    /**
-     * 是否显示
-     */
-    @TableField("is_show")
-    @ApiModelProperty(value = "是否显示")
+    @ColumnDefine(comment = "是否显示", defaultValue = "true")
     private Boolean isShow;
+
+    @Column(ignore = true)
+    private String parentName;
+
+    @Column(ignore = true)
+    private List<SysMenuEntity> childMenus;
 }

@@ -1,15 +1,20 @@
 package com.simple.modules.base.service.sys.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.json.JSONObject;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.simple.core.base.BaseServiceImpl;
+import com.simple.core.util.SecurityUtil;
 import com.simple.modules.base.entity.sys.SysMenuEntity;
 import com.simple.modules.base.mapper.sys.SysMenuMapper;
 import com.simple.modules.base.service.sys.SysMenuService;
 import com.simple.modules.base.service.sys.SysPermsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 系统菜单 Service 实现类
@@ -23,59 +28,46 @@ public class SysMenuServiceImpl
     private final SysPermsService sysPermsService;
 
     @Override
-    public void create(Map<String, Object> params) {
-        // 代码生成功能暂不实现
-    }
-
-    @Override
-    public List<SysMenuEntity> export(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return this.listByIds(ids);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean importMenu(List<SysMenuEntity> menus) {
-        if (menus == null || menus.isEmpty()) {
-            return false;
-        }
-        // 清除ID，作为新菜单导入
-        Map<Long, Long> idMap = new HashMap<>();
-        for (SysMenuEntity menu : menus) {
-            Long oldId = menu.getId();
-            menu.setId(null);
-            menu.setCreateTime(new Date());
-            menu.setUpdateTime(new Date());
-            this.save(menu);
-            idMap.put(oldId, menu.getId());
-        }
-        // 更新父ID
-        for (SysMenuEntity menu : menus) {
-            if (menu.getParentId() != null && idMap.containsKey(menu.getParentId())) {
-                menu.setParentId(idMap.get(menu.getParentId()));
-                this.updateById(menu);
+    public Object list(JSONObject requestParams, QueryWrapper queryWrapper) {
+        List<SysMenuEntity> list = sysPermsService.getMenus(SecurityUtil.getCurrentUsername());
+        list.forEach(e -> {
+            List<SysMenuEntity> parent = list.stream()
+                    .filter(sysMenuEntity -> e.getParentId() != null && e.getParentId()
+                            .equals(sysMenuEntity.getId())).collect(Collectors.toList());
+            if (!parent.isEmpty()) {
+                e.setParentName(parent.get(0).getName());
             }
+        });
+        return list;
+    }
+
+
+    @Override
+    public boolean delete(Long... ids) {
+        super.delete(ids);
+        for (Long id : ids) {
+            this.delChildMenu(id);
         }
         return true;
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean save(SysMenuEntity entity) {
-        boolean result = super.save(entity);
-        // 刷新权限缓存
-        sysPermsService.refreshPermsByMenuId(entity.getId());
-        return result;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean updateById(SysMenuEntity entity) {
-        boolean result = super.updateById(entity);
-        // 刷新权限缓存
-        sysPermsService.refreshPermsByMenuId(entity.getId());
-        return result;
+    /**
+     * 删除子菜单
+     *
+     * @param id 删除的菜单ID
+     */
+    private void delChildMenu(Long id) {
+        List<SysMenuEntity> delMenu = list(
+                QueryWrapper.create().eq(SysMenuEntity::getParentId, id));
+        if (CollectionUtil.isEmpty(delMenu)) {
+            return;
+        }
+        Long[] ids = delMenu.stream().map(SysMenuEntity::getId).toArray(Long[]::new);
+        if (ArrayUtil.isNotEmpty(ids)) {
+            delete(ids);
+            for (Long delId : ids) {
+                this.delChildMenu(delId);
+            }
+        }
     }
 }

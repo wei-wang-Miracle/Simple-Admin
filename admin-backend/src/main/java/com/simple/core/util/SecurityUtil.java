@@ -19,6 +19,7 @@ import java.util.List;
  * 安全工具类
  */
 public class SecurityUtil {
+    private static final CacheUtil coolCache = SpringUtil.getBean(CacheUtil.class);
     /**
      * 获取当前登录的用户
      *
@@ -46,16 +47,28 @@ public class SecurityUtil {
         return null;
     }
 
+    public static JSONObject getAdminUserInfo(JSONObject requestParams) {
+        JSONObject tokenInfo = requestParams.getJSONObject("tokenInfo");
+        return tokenInfo;
+    }
+
     /**
      * 获取系统用户ID
      *
-     * @return 系统用户ID
+     * @return 系统用户ID，如果未登录则返回null
      */
     public static Long getCurrentUserId() {
-        UserDetails userDetails = getCurrentUser();
-        // 将 Java 对象转换为 JSONObject 对象
-        JSONObject jsonObject = (JSONObject) JSON.toJSON(userDetails);
-        return jsonObject.getJSONObject("user").getLong("id");
+        try {
+            UserDetails userDetails = getCurrentUser();
+            if (userDetails == null) {
+                return null;
+            }
+            // 将 Java 对象转换为 JSONObject 对象
+            JSONObject jsonObject = (JSONObject) JSON.toJSON(userDetails);
+            return jsonObject.getJSONObject("user").getLong("id");
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**

@@ -1,9 +1,12 @@
 package com.simple.core.base;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.mybatisflex.annotation.Column;
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.core.activerecord.Model;
+import com.mybatisflex.core.query.QueryWrapper;
+import com.simple.core.annotation.ColumnDefine;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,25 +17,20 @@ import java.util.Date;
  * 所有实体类的父类，包含通用字段：id、createTime、updateTime
  */
 @Data
-public abstract class BaseEntity implements Serializable {
+public abstract class BaseEntity<T extends Model<T>> extends Model<T> implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * 主键ID，自增
-     */
-    @TableId(type = IdType.AUTO)
+    @Id(keyType = KeyType.Auto, comment = "ID")
     protected Long id;
 
-    /**
-     * 创建时间，插入时自动填充
-     */
-    @TableField(fill = FieldFill.INSERT)
+    @Column(onInsertValue = "now()")
+    @ColumnDefine(comment = "创建时间")
     protected Date createTime;
 
-    /**
-     * 更新时间，插入和更新时自动填充
-     */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @Column(onInsertValue = "now()", onUpdateValue = "now()")
+    @ColumnDefine(comment = "更新时间")
     protected Date updateTime;
+
+    @Column(ignore = true)
+    @JsonIgnore
+    private QueryWrapper queryWrapper;
 }

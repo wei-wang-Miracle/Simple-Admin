@@ -1,6 +1,12 @@
 package com.simple.core.security.jwt;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Dict;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.jwt.JWT;
+import cn.hutool.jwt.JWTUtil;
+import cn.hutool.jwt.JWTValidator;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -64,7 +70,7 @@ public class JwtTokenUtil {
 
     /**
      * 从 token 中获取信息
-     */
+     *//*
     public Claims getTokenInfo(String token) {
         try {
             return Jwts.parser()
@@ -74,6 +80,16 @@ public class JwtTokenUtil {
         } catch (Exception e) {
             return null;
         }
+    }*/
+
+    /**
+     * 获得token信息
+     *
+     * @param token 令牌
+     * @return token信息
+     */
+    public JWT getTokenInfo(String token) {
+        return JWT.of(token);
     }
 
     /**
@@ -81,10 +97,10 @@ public class JwtTokenUtil {
      */
     public boolean validateToken(String token) {
         try {
-            Claims claims = getTokenInfo(token);
-            return claims != null && !isTokenExpired(claims);
-        } catch (Exception e) {
+            JWTValidator.of(token).validateDate(DateUtil.date());
             return false;
+        } catch (Exception e) {
+            return true;
         }
     }
 
@@ -92,32 +108,25 @@ public class JwtTokenUtil {
      * 验证 token 并校验用户名
      */
     public boolean validateToken(String token, String username) {
-        try {
-            Claims claims = getTokenInfo(token);
-            if (claims == null) {
-                return false;
-            }
-            String tokenUsername = (String) claims.get("username");
-            return username.equals(tokenUsername) && !isTokenExpired(claims);
-        } catch (Exception e) {
+        if (ObjectUtil.isEmpty(token)) {
             return false;
         }
+        String tokenUsername = getUsernameFromToken(token);
+        String secret = getTokenSecret();
+        boolean isValidSignature = JWTUtil.verify(token, secret.getBytes());
+        return (tokenUsername.equals(username) && !isTokenExpired(token) && isValidSignature);
     }
 
     /**
      * 验证刷新 token
      */
     public boolean validateRefreshToken(String token) {
-        try {
-            Claims claims = getTokenInfo(token);
-            if (claims == null) {
-                return false;
-            }
-            Boolean isRefresh = (Boolean) claims.get("isRefresh");
-            return Boolean.TRUE.equals(isRefresh) && !isTokenExpired(claims);
-        } catch (Exception e) {
+        if (ObjectUtil.isEmpty(token)) {
             return false;
         }
+        String secret = getRefreshTokenSecret();
+        boolean isValidSignature = JWTUtil.verify(token, secret.getBytes());
+        return (!isTokenExpired(token) && isValidSignature);
     }
 
     /**
@@ -126,5 +135,23 @@ public class JwtTokenUtil {
     private boolean isTokenExpired(Claims claims) {
         Date expiration = claims.getExpiration();
         return expiration.before(new Date());
+    }
+    /**
+     * 从令牌中获取用户名
+     *
+     * @param token 令牌
+     * @return 用户名
+     */
+    public String getUsernameFromToken(String token) {
+        JWT jwt = JWT.of(token);
+        return jwt.getPayload("username").toString();
+    }
+    public String getTokenSecret() {
+        String secret = baseSysConfService.getValueWithCache(tokenKey);
+        if (StrUtil.isBlank(secret)) {
+            secret = StrUtil.uuid().replaceAll("-", "");
+            baseSysConfService.setValue(tokenKey, secret);
+        }
+        return secret;
     }
 }

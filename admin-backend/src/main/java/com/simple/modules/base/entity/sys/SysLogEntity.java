@@ -1,48 +1,35 @@
 package com.simple.modules.base.entity.sys;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.mybatisflex.annotation.Column;
+import com.mybatisflex.annotation.Table;
+import com.simple.core.annotation.ColumnDefine;
 import com.simple.core.base.BaseEntity;
-import com.simple.core.handler.PostgreSQLJsonTypeHandler;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.simple.core.handler.Fastjson2TypeHandler;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 系统日志实体类
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
-@TableName(value = "base_sys_log", autoResultMap = true)
-@ApiModel(description = "系统日志")
-public class SysLogEntity extends BaseEntity {
+@Getter
+@Setter
+@Table(value = "base_sys_log", comment = "系统日志表")
+public class SysLogEntity extends BaseEntity<SysLogEntity> {
 
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * 用户ID
-     */
-    @TableField("user_id")
-    @ApiModelProperty(value = "用户ID")
+    @ColumnDefine(comment = "用户ID", type = "bigint")
     private Long userId;
 
-    /**
-     * 行为
-     */
-    @ApiModelProperty(value = "行为")
+    @ColumnDefine(comment = "行为", length = 1000)
     private String action;
 
-    /**
-     * IP地址
-     */
-    @ApiModelProperty(value = "IP")
+    @ColumnDefine(comment = "IP", length = 50)
     private String ip;
 
-    /**
-     * 参数（JSON格式）
-     */
-    @TableField(value = "params", typeHandler = PostgreSQLJsonTypeHandler.class)
-    @ApiModelProperty(value = "参数")
-    private String params;
+    @ColumnDefine(comment = "参数", type = "json")
+    @Column(typeHandler = Fastjson2TypeHandler.class)
+    private Object params;
+
+    // 用户名称
+    @Column(ignore = true)
+    private String name;
 }

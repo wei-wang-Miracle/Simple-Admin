@@ -10,18 +10,17 @@ import com.simple.modules.base.entity.sys.SysUserEntity;
 public interface SysUserService extends BaseService<SysUserEntity> {
 
     /**
-     * 移动用户到指定部门
+     * 修改用户信息
      *
-     * @param departmentId 部门ID
-     * @param userIds      用户ID数组
-     */
-    void move(Long departmentId, Long[] userIds);
-
-    /**
-     * 修改个人信息
-     *
-     * @param userId 用户ID
-     * @param body   修改内容
+     * @param body 用户信息
      */
     void personUpdate(Long userId, Dict body);
+
+    /**
+     * 移动部门
+     *
+     * @param departmentId 部门ID
+     * @param userIds      用户ID集合
+     */
+    void move(Long departmentId, Long[] userIds);
 }

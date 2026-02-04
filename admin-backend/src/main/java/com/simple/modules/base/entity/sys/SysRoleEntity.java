@@ -1,82 +1,43 @@
 package com.simple.modules.base.entity.sys;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.mybatisflex.annotation.Column;
+import com.mybatisflex.annotation.Table;
+import com.simple.core.annotation.ColumnDefine;
 import com.simple.core.base.BaseEntity;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.simple.core.handler.Fastjson2TypeHandler;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
 /**
  * 系统角色实体类
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
-@TableName("base_sys_role")
-@ApiModel(description = "系统角色")
-public class SysRoleEntity extends BaseEntity {
+@Getter
+@Setter
+@Table(value = "base_sys_role", comment = "系统角色表")
+public class SysRoleEntity extends BaseEntity<SysRoleEntity> {
 
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * 用户ID
-     */
-    @TableField("user_id")
-    @ApiModelProperty(value = "用户ID")
+    @ColumnDefine(comment = "用户ID", notNull = true, type = "bigint")
     private Long userId;
 
-    /**
-     * 名称
-     */
-    @ApiModelProperty(value = "名称")
+    @ColumnDefine(comment = "名称", notNull = true)
     private String name;
 
-    /**
-     * 角色标签
-     */
-    @ApiModelProperty(value = "角色标签")
+    @ColumnDefine(comment = "角色标签", notNull = true)
     private String label;
 
-    /**
-     * 备注
-     */
-    @ApiModelProperty(value = "备注")
+    @ColumnDefine(comment = "备注")
     private String remark;
 
-    /**
-     * 数据权限是否关联上下级
-     */
-    @ApiModelProperty(value = "数据权限是否关联上下级")
+    @ColumnDefine(comment = "数据权限是否关联上下级", defaultValue = "1")
     private Integer relevance;
 
-    /**
-     * 菜单权限（JSON格式）
-     */
-    @TableField("menu_id_list")
-    @ApiModelProperty(value = "菜单权限")
-    private String menuIdList;
+    @ColumnDefine(comment = "菜单权限", type = "json")
+    @Column(typeHandler = Fastjson2TypeHandler.class)
+    private List<Long> menuIdList;
 
-    /**
-     * 部门权限（JSON格式）
-     */
-    @TableField("department_id_list")
-    @ApiModelProperty(value = "部门权限")
-    private String departmentIdList;
-
-    /**
-     * 菜单ID列表（非数据库字段，用于接收前端参数）
-     */
-    @TableField(exist = false)
-    @ApiModelProperty(value = "菜单ID列表")
-    private List<Long> menuIdListArr;
-
-    /**
-     * 部门ID列表（非数据库字段，用于接收前端参数）
-     */
-    @TableField(exist = false)
-    @ApiModelProperty(value = "部门ID列表")
-    private List<Long> departmentIdListArr;
+    @ColumnDefine(comment = "部门权限", type = "json")
+    @Column(typeHandler = Fastjson2TypeHandler.class)
+    private List<Long> departmentIdList;
 }

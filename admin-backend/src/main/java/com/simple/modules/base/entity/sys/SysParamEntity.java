@@ -1,53 +1,30 @@
 package com.simple.modules.base.entity.sys;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.mybatisflex.annotation.Table;
+import com.simple.core.annotation.ColumnDefine;
 import com.simple.core.base.BaseEntity;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 系统参数配置实体类
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
-@TableName("base_sys_param")
-@ApiModel(description = "系统参数配置")
-public class SysParamEntity extends BaseEntity {
-
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * 键
-     */
-    @TableField("key_name")
-    @ApiModelProperty(value = "键")
+@Getter
+@Setter
+@Table(value = "base_sys_param", comment = "系统参数配置")
+public class SysParamEntity extends BaseEntity<SysParamEntity> {
+    @ColumnDefine(comment = "键", notNull = true)
     private String keyName;
 
-    /**
-     * 名称
-     */
-    @ApiModelProperty(value = "名称")
+    @ColumnDefine(comment = "名称")
     private String name;
 
-    /**
-     * 数据
-     */
-    @ApiModelProperty(value = "数据")
+    @ColumnDefine(comment = "数据", type = "text")
     private String data;
 
-    /**
-     * 数据类型 0:字符串 1:数组 2:键值对
-     */
-    @TableField("data_type")
-    @ApiModelProperty(value = "数据类型 0:字符串 1:数组 2:键值对")
+    @ColumnDefine(comment = "数据类型 0:字符串 1:数组 2:键值对", defaultValue = "0")
     private Integer dataType;
 
-    /**
-     * 备注
-     */
-    @ApiModelProperty(value = "备注")
+    @ColumnDefine(comment = "备注")
     private String remark;
 }

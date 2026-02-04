@@ -1,6 +1,6 @@
 package com.simple.modules.base.mapper.sys;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.mybatisflex.core.BaseMapper;
 import com.simple.modules.base.entity.sys.SysRoleMenuEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -13,16 +13,11 @@ import java.util.List;
  */
 @Mapper
 public interface SysRoleMenuMapper extends BaseMapper<SysRoleMenuEntity> {
-
     /**
-     * 根据角色ID列表获取菜单ID列表
+     * 跟菜单关联的所有用户
+     *
+     * @param menuId 菜单
+     * @return 所有用户ID
      */
-    @Select("<script>" +
-            "SELECT DISTINCT menu_id FROM base_sys_role_menu " +
-            "WHERE role_id IN " +
-            "<foreach collection='roleIds' item='roleId' open='(' separator=',' close=')'>" +
-            "#{roleId}" +
-            "</foreach>" +
-            "</script>")
-    List<Long> selectMenuIdsByRoleIds(@Param("roleIds") List<Long> roleIds);
+    Long[] userIds(@Param("menuId") Long menuId);
 }

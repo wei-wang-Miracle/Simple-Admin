@@ -1,35 +1,24 @@
 package com.simple.modules.base.entity.sys;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.mybatisflex.annotation.Table;
+import com.simple.core.annotation.ColumnDefine;
 import com.simple.core.base.BaseEntity;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 系统用户角色关联实体类
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
-@TableName("base_sys_user_role")
-@ApiModel(description = "系统用户角色")
-public class SysUserRoleEntity extends BaseEntity {
+@Getter
+@Setter
+@Table(value = "base_sys_user_role", comment = "系统用户角色表")
+public class SysUserRoleEntity extends BaseEntity<SysUserRoleEntity> {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 用户ID
-     */
-    @TableField("user_id")
-    @ApiModelProperty(value = "用户ID")
+    @ColumnDefine(comment = "用户ID", type = "bigint")
     private Long userId;
 
-    /**
-     * 角色ID
-     */
-    @TableField("role_id")
-    @ApiModelProperty(value = "角色ID")
+    @ColumnDefine(comment = "角色ID", type = "bigint")
     private Long roleId;
 }

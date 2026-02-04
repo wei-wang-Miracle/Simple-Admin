@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.simple.core.base.BaseServiceImpl;
 import com.simple.modules.base.entity.sys.SysUserEntity;
+import com.simple.modules.base.mapper.sys.SysDepartmentMapper;
 import com.simple.modules.base.mapper.sys.SysUserMapper;
 import com.simple.modules.base.service.sys.SysPermsService;
 import com.simple.modules.base.service.sys.SysUserService;
@@ -26,6 +27,7 @@ public class SysUserServiceImpl
 
     private final PasswordEncoder passwordEncoder;
     private final SysPermsService sysPermsService;
+    final private SysDepartmentMapper baseSysDepartmentMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)

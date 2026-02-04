@@ -1,24 +1,24 @@
 package com.simple.modules.base.service.sys.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.convert.Convert;
 import cn.hutool.core.lang.Dict;
 import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.simple.core.cache.CacheUtil;
-import com.simple.core.security.jwt.JwtUser;
 import com.simple.core.util.SecurityUtil;
 import com.simple.modules.base.entity.sys.*;
 import com.simple.modules.base.mapper.sys.*;
 import com.simple.modules.base.service.sys.SysPermsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 权限菜单 Service 实现类
@@ -27,260 +27,240 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SysPermsServiceImpl implements SysPermsService {
 
-    private final CacheUtil cacheUtil;
-    private final SysUserMapper sysUserMapper;
-    private final SysUserRoleMapper sysUserRoleMapper;
-    private final SysRoleMapper sysRoleMapper;
-    private final SysMenuMapper sysMenuMapper;
-    private final SysRoleMenuMapper sysRoleMenuMapper;
-    private final SysRoleDepartmentMapper sysRoleDepartmentMapper;
+    final private CacheUtil cacheUtil;
+
+    final private SysUserMapper baseSysUserMapper;
+
+    final private SysUserRoleMapper baseSysUserRoleMapper;
+
+    final private SysMenuMapper baseSysMenuMapper;
+
+    final private SysRoleMenuMapper baseSysRoleMenuMapper;
+
+    final private SysRoleDepartmentMapper baseSysRoleDepartmentMapper;
+
+    final private SysDepartmentMapper baseSysDepartmentMapper;
+
+    final private ExecutorService cachedThreadPool;
 
     @Override
     public Long[] loginDepartmentIds() {
-        Long userId = SecurityUtil.getCurrentUserId();
-        if (userId == null) {
-            return new Long[0];
+        String username = SecurityUtil.getCurrentUsername();
+        if (username.equals("admin")) {
+            return baseSysDepartmentMapper.selectAll().stream().map(SysDepartmentEntity::getId)
+                    .toArray(Long[]::new);
+        } else {
+            Long[] roleIds = getRoles(username);
+            return baseSysRoleDepartmentMapper
+                    .selectListByQuery(
+                            QueryWrapper.create().in(SysRoleDepartmentEntity::getRoleId, (Object) roleIds))
+                    .stream().map(SysRoleDepartmentEntity::getDepartmentId).toArray(Long[]::new);
         }
-        Long[] roleIds = getRoles(userId);
-        return getDepartmentIdsByRoleIds(roleIds);
     }
 
     @Override
     public Long[] getDepartmentIdsByRoleIds(Long[] roleIds) {
-        if (ArrayUtil.isEmpty(roleIds)) {
-            return new Long[0];
+        return getLongs(roleIds);
+    }
+
+    private Long[] getLongs(Long[] roleIds) {
+        if (ObjectUtil.isEmpty(roleIds)) {
+            return new Long[]{};
         }
-        LambdaQueryWrapper<SysRoleDepartmentEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.in(SysRoleDepartmentEntity::getRoleId, Arrays.asList(roleIds));
-        List<SysRoleDepartmentEntity> list = sysRoleDepartmentMapper.selectList(wrapper);
-        return list.stream()
-                .map(SysRoleDepartmentEntity::getDepartmentId)
-                .distinct()
-                .toArray(Long[]::new);
+        QueryWrapper queryWrapper = QueryWrapper.create();
+        if (!CollUtil.toList(roleIds).contains(1L)) {
+            queryWrapper.in(SysRoleDepartmentEntity::getRoleId, (Object) roleIds);
+        }
+        return baseSysRoleDepartmentMapper
+                .selectListByQuery(queryWrapper)
+                .stream().map(SysRoleDepartmentEntity::getDepartmentId).toArray(Long[]::new);
+    }
+
+    @Override
+    public Long[] getDepartmentIdsByRoleIds(Long userId) {
+        Long[] roleIds = getRoles(userId);
+        return getLongs(roleIds);
     }
 
     @Override
     public Long[] getDepartmentIdsByUserId(Long userId) {
-        Long[] roleIds = getRoles(userId);
-        return getDepartmentIdsByRoleIds(roleIds);
+        return (Long[]) cacheUtil.get("admin:department:" + userId);
     }
 
     @Override
     public String[] getPermsCache(Long userId) {
-        String key = "admin:perms:" + userId;
-        String[] perms = cacheUtil.get(key, String[].class);
-        if (perms == null) {
-            perms = getPerms(userId);
-            cacheUtil.set(key, perms);
+        Object result = cacheUtil.get("admin:perms:" + userId);
+        if (ObjectUtil.isNotEmpty(result)) {
+            return Convert.toStrArray(result);
         }
-        return perms;
+        return getPerms(userId);
     }
 
     @Override
     public Long[] getRoles(Long userId) {
-        LambdaQueryWrapper<SysUserRoleEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysUserRoleEntity::getUserId, userId);
-        List<SysUserRoleEntity> list = sysUserRoleMapper.selectList(wrapper);
-        return list.stream()
-                .map(SysUserRoleEntity::getRoleId)
-                .toArray(Long[]::new);
+        return getRoles(baseSysUserMapper.selectOneById(userId));
     }
 
     @Override
     public Long[] getRoles(String username) {
-        LambdaQueryWrapper<SysUserEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysUserEntity::getUsername, username);
-        SysUserEntity user = sysUserMapper.selectOne(wrapper);
-        if (user == null) {
-            return new Long[0];
-        }
-        return getRoles(user.getId());
+        return getRoles(
+                baseSysUserMapper.selectOneByQuery(QueryWrapper.create().eq(SysUserEntity::getUsername, username)));
     }
 
     @Override
     public Long[] getRoles(SysUserEntity userEntity) {
-        if (userEntity == null) {
-            return new Long[0];
+        Long[] roleIds = null;
+        if (!userEntity.getUsername().equals("admin")) {
+            List<SysUserRoleEntity> list = baseSysUserRoleMapper
+                    .selectListByQuery(QueryWrapper.create().eq(SysUserRoleEntity::getUserId, userEntity.getId()));
+            roleIds = list.stream().map(SysUserRoleEntity::getRoleId).toArray(Long[]::new);
+            if (Arrays.asList(roleIds).contains(1L)) {
+                roleIds = null;
+            }
         }
-        // 如果是 admin 用户，返回所有角色
-        if ("admin".equals(userEntity.getUsername())) {
-            List<SysRoleEntity> allRoles = sysRoleMapper.selectList(null);
-            return allRoles.stream()
-                    .map(SysRoleEntity::getId)
-                    .toArray(Long[]::new);
-        }
-        return getRoles(userEntity.getId());
+        return roleIds;
     }
 
     @Override
     public String[] getPerms(Long userId) {
-        Long[] roleIds = getRoles(userId);
-        return getPerms(roleIds);
+        return getPerms(getRoles(userId));
     }
 
     @Override
     public String[] getPerms(Long[] roleIds) {
-        if (ArrayUtil.isEmpty(roleIds)) {
-            return new String[0];
-        }
         List<SysMenuEntity> menus = getMenus(roleIds);
-        return menus.stream()
-                .map(SysMenuEntity::getPerms)
-                .filter(StrUtil::isNotBlank)
-                .flatMap(perms -> Arrays.stream(perms.split(",")))
-                .distinct()
-                .toArray(String[]::new);
+        Set<String> perms = new HashSet<>();
+        String[] permsData = menus.stream().map(SysMenuEntity::getPerms)
+                .filter(itemPerms -> !StrUtil.isEmpty(itemPerms)).toArray(String[]::new);
+        for (String permData : permsData) {
+            perms.addAll(Arrays.asList(permData.split(",")));
+        }
+        return ArrayUtil.toArray(perms, String.class);
     }
 
     @Override
     public List<SysMenuEntity> getMenus(Long[] roleIds) {
-        if (ArrayUtil.isEmpty(roleIds)) {
-            return Collections.emptyList();
+        if (CollUtil.toList(roleIds).contains(1L)) {
+            roleIds = null;
         }
-        return sysMenuMapper.selectByRoleIds(Arrays.asList(roleIds));
+        if (roleIds != null && roleIds.length == 0) {
+            return new ArrayList<>();
+        }
+
+        QueryWrapper queryWrapper = QueryWrapper.create().select(BASE_SYS_MENU_ENTITY.ALL_COLUMNS).from(BASE_SYS_MENU_ENTITY);
+        if (ObjectUtil.isNotEmpty(roleIds)) {
+            queryWrapper.leftJoin(BASE_SYS_ROLE_MENU_ENTITY).on(BASE_SYS_MENU_ENTITY.ID.eq(BASE_SYS_ROLE_MENU_ENTITY.MENU_ID)).and(BASE_SYS_ROLE_MENU_ENTITY.ROLE_ID.in((Object) roleIds));
+        }
+        return baseSysMenuMapper.selectListByQuery(queryWrapper.groupBy(BASE_SYS_MENU_ENTITY.ID).orderBy(BASE_SYS_MENU_ENTITY.ORDER_NUM, false));
     }
 
     @Override
     public List<SysMenuEntity> getMenus(Long userId) {
-        Long[] roleIds = getRoles(userId);
-        return getMenus(roleIds);
+        return getMenus(getRoles(userId));
     }
 
     @Override
     public List<SysMenuEntity> getMenus(String username) {
-        Long[] roleIds = getRoles(username);
-        return getMenus(roleIds);
+        SysUserEntity sysUserEntity = baseSysUserMapper
+                .selectOneByQuery(QueryWrapper.create().eq(SysUserEntity::getUsername, username));
+        return getMenus(sysUserEntity.getId());
     }
 
     @Override
     public String[] getAllPerms() {
-        List<SysMenuEntity> menus = sysMenuMapper.selectList(null);
-        return menus.stream()
-                .map(SysMenuEntity::getPerms)
-                .filter(StrUtil::isNotBlank)
-                .flatMap(perms -> Arrays.stream(perms.split(",")))
-                .distinct()
-                .toArray(String[]::new);
+        return getPerms((Long[]) null);
     }
 
     @Override
     public Dict permmenu(Long adminUserId) {
-        SysUserEntity user = sysUserMapper.selectById(adminUserId);
-        List<SysMenuEntity> menus;
-        String[] perms;
-
-        if (user != null && "admin".equals(user.getUsername())) {
-            // admin用户拥有所有权限
-            menus = sysMenuMapper.selectList(null);
-            perms = getAllPerms();
-        } else {
-            menus = getMenus(adminUserId);
-            perms = getPerms(adminUserId);
-        }
-
-        return Dict.create()
-                .set("menus", menus)
-                .set("perms", perms);
+        return Dict.create().set("menus", getMenus(adminUserId)).set("perms", getPerms(adminUserId));
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void updatePerms(Long roleId, Long[] menuIdList, Long[] departmentIds) {
-        // 删除旧的角色菜单关系
-        LambdaQueryWrapper<SysRoleMenuEntity> menuWrapper = new LambdaQueryWrapper<>();
-        menuWrapper.eq(SysRoleMenuEntity::getRoleId, roleId);
-        sysRoleMenuMapper.delete(menuWrapper);
-
-        // 添加新的角色菜单关系
-        if (ArrayUtil.isNotEmpty(menuIdList)) {
-            for (Long menuId : menuIdList) {
-                SysRoleMenuEntity roleMenu = new SysRoleMenuEntity();
-                roleMenu.setRoleId(roleId);
-                roleMenu.setMenuId(menuId);
-                sysRoleMenuMapper.insert(roleMenu);
-            }
+        // 更新菜单权限
+        baseSysRoleMenuMapper.deleteByQuery(QueryWrapper.create().eq(SysRoleMenuEntity::getRoleId, roleId));
+        List<SysRoleMenuEntity> batchRoleMenuList = new ArrayList<>();
+        for (Long menuId : menuIdList) {
+            SysRoleMenuEntity roleMenuEntity = new SysRoleMenuEntity();
+            roleMenuEntity.setRoleId(roleId);
+            roleMenuEntity.setMenuId(menuId);
+            batchRoleMenuList.add(roleMenuEntity);
         }
-
-        // 删除旧的角色部门关系
-        LambdaQueryWrapper<SysRoleDepartmentEntity> deptWrapper = new LambdaQueryWrapper<>();
-        deptWrapper.eq(SysRoleDepartmentEntity::getRoleId, roleId);
-        sysRoleDepartmentMapper.delete(deptWrapper);
-
-        // 添加新的角色部门关系
-        if (ArrayUtil.isNotEmpty(departmentIds)) {
-            for (Long departmentId : departmentIds) {
-                SysRoleDepartmentEntity roleDept = new SysRoleDepartmentEntity();
-                roleDept.setRoleId(roleId);
-                roleDept.setDepartmentId(departmentId);
-                sysRoleDepartmentMapper.insert(roleDept);
-            }
+        if (ObjectUtil.isNotEmpty(batchRoleMenuList)) {
+            baseSysRoleMenuMapper.insertBatch(batchRoleMenuList);
         }
+        // 更新部门权限
+        baseSysRoleDepartmentMapper
+                .deleteByQuery(QueryWrapper.create().eq(SysRoleDepartmentEntity::getRoleId, roleId));
+        List<SysRoleDepartmentEntity> batchRoleDepartmentList = new ArrayList<>();
+        for (Long departmentId : departmentIds) {
+            SysRoleDepartmentEntity roleDepartmentEntity = new SysRoleDepartmentEntity();
+            roleDepartmentEntity.setRoleId(roleId);
+            roleDepartmentEntity.setDepartmentId(departmentId);
+            batchRoleDepartmentList.add(roleDepartmentEntity);
+        }
+        if (ObjectUtil.isNotEmpty(batchRoleDepartmentList)) {
+            baseSysRoleDepartmentMapper.insertBatch(batchRoleDepartmentList);
+        }
+        cachedThreadPool.submit(() -> {
+            // 刷新对应角色用户的权限
+            List<SysUserRoleEntity> userRoles = baseSysUserRoleMapper
+                    .selectListByQuery(QueryWrapper.create().eq(SysUserRoleEntity::getRoleId, roleId));
+            for (SysUserRoleEntity userRole : userRoles) {
+                refreshPerms(userRole.getUserId());
+            }
+        });
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void updateUserRole(Long userId, Long[] roleIdList) {
-        // 删除旧的用户角色关系
-        LambdaQueryWrapper<SysUserRoleEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysUserRoleEntity::getUserId, userId);
-        sysUserRoleMapper.delete(wrapper);
-
-        // 添加新的用户角色关系
-        if (ArrayUtil.isNotEmpty(roleIdList)) {
-            for (Long roleId : roleIdList) {
-                SysUserRoleEntity userRole = new SysUserRoleEntity();
-                userRole.setUserId(userId);
-                userRole.setRoleId(roleId);
-                sysUserRoleMapper.insert(userRole);
-            }
+        baseSysUserRoleMapper.deleteByQuery(QueryWrapper.create().eq(SysUserRoleEntity::getUserId, userId));
+        if (roleIdList == null) {
+            roleIdList = new Long[0];
         }
-
-        // 刷新权限缓存
+        for (Long roleId : roleIdList) {
+            SysUserRoleEntity sysUserRoleEntity = new SysUserRoleEntity();
+            sysUserRoleEntity.setRoleId(roleId);
+            sysUserRoleEntity.setUserId(userId);
+            baseSysUserRoleMapper.insert(sysUserRoleEntity);
+        }
         refreshPerms(userId);
     }
 
     @Override
-    @Async
     public void refreshPerms(Long userId) {
-        String[] perms = getPerms(userId);
-        cacheUtil.set("admin:perms:" + userId, perms);
-
-        // 更新用户详情缓存
-        SysUserEntity user = sysUserMapper.selectById(userId);
-        if (user != null) {
-            List<GrantedAuthority> authorities = Arrays.stream(perms)
-                    .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toList());
-            // 增加 ADMIN 角色
-            authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-
-            JwtUser jwtUser = new JwtUser(user.getUsername(), user.getPassword(), authorities);
-            cacheUtil.set("admin:userDetails:" + user.getUsername(), jwtUser);
-            cacheUtil.set("admin:passwordVersion:" + userId, user.getPasswordV());
+        SysUserEntity baseSysUserEntity = baseSysUserMapper.selectOneById(userId);
+        if (baseSysUserEntity != null && baseSysUserEntity.getStatus() != 0) {
+            SpringContextUtils.getBean(UserDetailsService.class).loadUserByUsername(baseSysUserEntity.getUsername());
+        }
+        if (baseSysUserEntity != null && baseSysUserEntity.getStatus() == 0) {
+            SecurityUtil.adminLogout(baseSysUserEntity.getId(), baseSysUserEntity.getUsername());
         }
     }
 
+    @Async
     @Override
     public void refreshPermsByMenuId(Long menuId) {
-        // 获取关联此菜单的所有角色
-        LambdaQueryWrapper<SysRoleMenuEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysRoleMenuEntity::getMenuId, menuId);
-        List<SysRoleMenuEntity> roleMenus = sysRoleMenuMapper.selectList(wrapper);
-
-        for (SysRoleMenuEntity roleMenu : roleMenus) {
-            refreshPermsByRoleId(roleMenu.getRoleId());
+        // 刷新超管权限、 找出这个菜单的所有用户、 刷新用户权限
+        SysUserEntity admin = baseSysUserMapper
+                .selectOneByQuery(QueryWrapper.create().eq(SysUserEntity::getUsername, "admin"));
+        refreshPerms(admin.getId());
+        List<Row> list = baseSysRoleMenuMapper.selectRowsByQuery(QueryWrapper.create().select(BASE_SYS_USER_ROLE_ENTITY.USER_ID)
+                .from(BASE_SYS_ROLE_MENU_ENTITY).leftJoin(BASE_SYS_USER_ROLE_ENTITY)
+                .on(BASE_SYS_ROLE_MENU_ENTITY.ROLE_ID.eq(BASE_SYS_USER_ROLE_ENTITY.ROLE_ID)).and(BASE_SYS_ROLE_MENU_ENTITY.MENU_ID.eq(menuId, ObjectUtil.isNotEmpty(menuId))).groupBy(BASE_SYS_USER_ROLE_ENTITY.USER_ID));
+        for (Row row : list) {
+            refreshPerms(row.getLong("userId"));
         }
     }
 
     @Override
     public void refreshPermsByRoleId(Long roleId) {
-        // 获取关联此角色的所有用户
-        LambdaQueryWrapper<SysUserRoleEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SysUserRoleEntity::getRoleId, roleId);
-        List<SysUserRoleEntity> userRoles = sysUserRoleMapper.selectList(wrapper);
-
-        for (SysUserRoleEntity userRole : userRoles) {
-            refreshPerms(userRole.getUserId());
-        }
+        // 找出角色对应的所有用户
+        List<SysUserRoleEntity> list = baseSysUserRoleMapper
+                .selectListByQuery(QueryWrapper.create().eq(SysUserRoleEntity::getRoleId, roleId));
+        list.forEach(e -> {
+            refreshPerms(e.getUserId());
+        });
     }
 }

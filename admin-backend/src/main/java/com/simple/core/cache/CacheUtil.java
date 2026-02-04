@@ -3,6 +3,9 @@ package com.simple.core.cache;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.cache.CacheType;
+import org.springframework.cache.Cache;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +17,9 @@ import java.util.concurrent.TimeUnit;
 @Component
 @RequiredArgsConstructor
 public class CacheUtil {
-
+    // 缓存类型
+    @Value("${spring.cache.type}")
+    private String type;
     private final StringRedisTemplate stringRedisTemplate;
 
     /**
@@ -68,6 +73,5 @@ public class CacheUtil {
     public void expire(String key, long seconds) {
         stringRedisTemplate.expire(key, seconds, TimeUnit.SECONDS);
     }
-
 
 }

@@ -15,7 +15,7 @@ public interface SysPermsService {
      * 获得权限缓存
      *
      * @param userId 用户ID
-     * @return 权限数组
+     * @return 返回用户相关的权限信息
      */
     String[] getPermsCache(Long userId);
 
@@ -23,23 +23,23 @@ public interface SysPermsService {
      * 获得权限
      *
      * @param userId 用户ID
-     * @return 权限数组
+     * @return 返回用户相关的权限信息
      */
     String[] getPerms(Long userId);
 
     /**
      * 获得权限
      *
-     * @param roleIds 角色ID数组
-     * @return 权限数组
+     * @param roleIds 用户角色数组
+     * @return 返回用户相关的权限信息
      */
     String[] getPerms(Long[] roleIds);
 
     /**
      * 获得菜单
      *
-     * @param roleIds 角色ID数组
-     * @return 菜单列表
+     * @param roleIds 角色
+     * @return 返回菜单
      */
     List<SysMenuEntity> getMenus(Long[] roleIds);
 
@@ -47,7 +47,7 @@ public interface SysPermsService {
      * 获得菜单
      *
      * @param userId 用户ID
-     * @return 菜单列表
+     * @return 返回菜单
      */
     List<SysMenuEntity> getMenus(Long userId);
 
@@ -55,7 +55,7 @@ public interface SysPermsService {
      * 获得菜单
      *
      * @param username 用户名
-     * @return 菜单列表
+     * @return 返回菜单
      */
     List<SysMenuEntity> getMenus(String username);
 
@@ -63,7 +63,7 @@ public interface SysPermsService {
      * 获得角色数组
      *
      * @param userId 用户ID
-     * @return 角色ID数组
+     * @return 返回角色数组
      */
     Long[] getRoles(Long userId);
 
@@ -71,22 +71,14 @@ public interface SysPermsService {
      * 获得角色数组
      *
      * @param username 用户名
-     * @return 角色ID数组
+     * @return 返回角色数组
      */
     Long[] getRoles(String username);
 
     /**
-     * 获得角色数组
-     *
-     * @param userEntity 用户实体
-     * @return 角色ID数组
-     */
-    Long[] getRoles(SysUserEntity userEntity);
-
-    /**
      * 获得登录用户的部门权限
      *
-     * @return 部门ID数组
+     * @return 部门ID集合
      */
     Long[] loginDepartmentIds();
 
@@ -101,22 +93,38 @@ public interface SysPermsService {
     /**
      * 根据用户ID获得部门ID
      *
-     * @param userId 用户ID
+     * @param userId 角色ID数组
      * @return 部门ID数组
      */
     Long[] getDepartmentIdsByUserId(Long userId);
 
     /**
+     * 根据用户ID获得部门ID
+     *
+     * @param userId 角色ID数组
+     * @return 部门ID数组
+     */
+    Long[] getDepartmentIdsByRoleIds(Long userId);
+
+    /**
+     * 获得角色数组
+     *
+     * @param userEntity 用户
+     * @return 返回角色数组
+     */
+    Long[] getRoles(SysUserEntity userEntity);
+
+    /**
      * 所有的操作权限
      *
-     * @return 权限数组
+     * @return 返回所有的操作权限
      */
     String[] getAllPerms();
 
     /**
      * 用户的权限菜单
      *
-     * @param adminUserId 用户ID
+     * @param adminUserId 登录的用户
      * @return 权限菜单
      */
     Dict permmenu(Long adminUserId);
@@ -125,8 +133,8 @@ public interface SysPermsService {
      * 更新角色权限
      *
      * @param roleId        角色ID
-     * @param menuIdList    菜单ID数组
-     * @param departmentIds 部门ID数组
+     * @param menuIdList    菜单ID
+     * @param departmentIds 部门ID
      */
     void updatePerms(Long roleId, Long[] menuIdList, Long[] departmentIds);
 
@@ -134,7 +142,7 @@ public interface SysPermsService {
      * 更新用户角色
      *
      * @param userId     用户ID
-     * @param roleIdList 角色ID数组
+     * @param roleIdList 角色集合
      */
     void updateUserRole(Long userId, Long[] roleIdList);
 
@@ -148,7 +156,7 @@ public interface SysPermsService {
     /**
      * 刷新权限
      *
-     * @param menuId 菜单ID
+     * @param menuId 用户ID
      */
     void refreshPermsByMenuId(Long menuId);
 
