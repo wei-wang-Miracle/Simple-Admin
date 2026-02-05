@@ -1,7 +1,6 @@
 package com.simple.modules.base.controller.admin;
 
 import cn.hutool.core.lang.Dict;
-import com.simple.core.file.FileUploadStrategyFactory;
 import com.simple.core.request.RestResult;
 import com.simple.modules.base.entity.sys.SysUserEntity;
 import com.simple.modules.base.service.sys.SysLoginService;
@@ -24,7 +23,6 @@ public class AdminBaseCommController {
     private final SysPermsService baseSysPermsService;
     private final SysUserService baseSysUserService;
     private final SysLoginService baseSysLoginService;
-    private final FileUploadStrategyFactory fileUploadStrategyFactory;
 
     @ApiOperation("个人信息")
     @GetMapping("/person")
@@ -58,22 +56,5 @@ public class AdminBaseCommController {
     public RestResult logout(@RequestAttribute Long adminUserId, @RequestAttribute String adminUsername) {
         baseSysLoginService.logout(adminUserId, adminUsername);
         return RestResult.ok();
-    }
-
-    @ApiOperation("获取上传模式")
-    @GetMapping("/uploadMode")
-    public RestResult uploadMode() {
-        // 获取上传模式：local 为本地上传
-        String mode = fileUploadStrategyFactory.getMode();
-        return RestResult.ok(Dict.create().set("mode", mode).set("type", mode));
-    }
-
-    @ApiOperation("文件上传")
-    @PostMapping("/upload")
-    public RestResult upload(@RequestParam("file") org.springframework.web.multipart.MultipartFile file,
-                             javax.servlet.http.HttpServletRequest request) {
-        // 使用文件上传策略工厂处理上传
-        Object result = fileUploadStrategyFactory.upload(new org.springframework.web.multipart.MultipartFile[]{file}, request);
-        return RestResult.ok(result);
     }
 }

@@ -24,23 +24,6 @@ public class SysLogController {
 
 	private final SysLogService baseSysLogService;
 
-	// 日志保存天数（简易实现，存储在 Controller 层）
-	private static Integer logKeepDays = 90;
-
-	@ApiOperation("设置日志保存天数")
-	@PostMapping("/setKeep")
-	public RestResult setKeep(@RequestBody Map<String, Object> params) {
-		Integer value = Integer.parseInt(params.get("value").toString());
-		logKeepDays = value;
-		return RestResult.ok();
-	}
-
-	@ApiOperation("获取日志保存天数")
-	@GetMapping("/getKeep")
-	public RestResult getKeep() {
-		return RestResult.ok(logKeepDays);
-	}
-
 	@ApiOperation("分页")
 	@PostMapping("/page")
 	public RestResult page(@RequestBody Map<String, Object> params) {

@@ -11,15 +11,6 @@
 				{{ $t('清空') }}
 			</el-button>
 
-			<cl-filter :label="$t('日志保存天数')">
-				<el-input-number
-					v-model="day"
-					controls-position="right"
-					:max="10000"
-					:min="1"
-					@change="saveDay"
-				/>
-			</cl-filter>
 
 			<cl-flex1 />
 			<cl-search-key :placeholder="$t('搜索请求地址、用户昵称、ip')" />
@@ -50,8 +41,6 @@ import { useI18n } from 'vue-i18n';
 const { service } = useCool();
 const { t } = useI18n();
 
-// 天数
-const day = ref(1);
 
 // cl-crud
 const Crud = useCrud({ service: service.base.sys.log }, app => {
@@ -113,17 +102,6 @@ const Table = useTable({
 	]
 });
 
-// 保存天数
-function saveDay() {
-	service.base.sys.log
-		.setKeep({ value: day.value })
-		.then(() => {
-			ElMessage.success(t('保存成功'));
-		})
-		.catch(err => {
-			ElMessage.error(err.message);
-		});
-}
 
 // 清空日志
 function clear() {
@@ -145,9 +123,5 @@ function clear() {
 }
 
 onMounted(() => {
-	// 获取天数
-	service.base.sys.log.getKeep().then(res => {
-		day.value = Number(res);
-	});
 });
 </script>
