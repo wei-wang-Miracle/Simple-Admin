@@ -13,11 +13,5 @@ export default (): ModuleConfig => {
 		author: 'COOL',
 		version: '1.0.1',
 		updateTime: '2024-03-28',
-		demo: [
-			{
-				name: '基础用法',
-				component: () => import('./demo/base.vue')
-			}
-		]
 	};
 };

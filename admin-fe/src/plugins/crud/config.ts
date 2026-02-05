@@ -63,6 +63,5 @@ export default (): Merge<ModuleConfig, CrudOptions> => {
 		version: '1.1.2',
 		updateTime: '2024-12-31',
 		doc: 'https://vue.cool-admin.com/src/guide/plugins/crud.html',
-		demo: '/demo/crud'
 	};
 };
