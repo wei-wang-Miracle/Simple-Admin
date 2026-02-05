@@ -38,7 +38,7 @@ public class SysMenuController {
     @PostMapping("/delete")
     public RestResult delete(@RequestBody Map<String, Object> params) {
         List<Long> ids = getIds(params);
-        baseSysMenuService.removeByIds(ids);
+        baseSysMenuService.delete(ids.toArray(new Long[0]));
         return RestResult.ok();
     }
 
