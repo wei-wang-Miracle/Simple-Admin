@@ -2,6 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Spring%20Boot-2.7.12-brightgreen" alt="Spring Boot">
+  <img src="https://img.shields.io/badge/MyBatis--Flex-1.11.6-blue" alt="MyBatis-Flex">
   <img src="https://img.shields.io/badge/Vue.js-3.5-blue" alt="Vue.js">
   <img src="https://img.shields.io/badge/Java-1.8-orange" alt="Java">
   <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License">
@@ -9,177 +10,109 @@
 
 ## 📖 项目简介
 
-**Simple Admin** 是基于 [Cool Admin](https://cool-js.com/) 再开发的极简管理后台系统。项目专注于提供最核心的后台管理功能，剔除了不必要的复杂模块，保留了以下核心特性：
+**Simple Admin** 是一个基于 Spring Boot 2.7 和 Vue 3 的轻量级通用后台管理系统。项目旨在提供一个高效、简洁、易于扩展的开发基座。
 
-- 🔐 **JWT 权限验证** - 安全可靠的用户身份认证机制
-- 🎯 **RBAC 菜单管理** - 基于角色的访问控制与菜单权限管理
-- ⚙️ **系统管理** - 完整的用户、角色、部门、参数等系统配置功能
+### 核心特性
+
+- 🔐 **权限安全**: 基于 Spring Security + JWT 的身份认证与无状态会话。
+- ⚡ **卓越性能**: 后端采用 **MyBatis-Flex** 框架，具备极致的查询性能与流式 API 体验。
+- 🎨 **极简开发**: 前端基于 **Cool-CRUD** 生态，支持配置化快速生成管理界面。
+- 组织架构: 完善的部门、角色、用户管理体系，支持灵活的权限分配。
 
 ## 🏗️ 技术架构
 
 ### 后端技术栈 (admin-backend)
 
-| 技术            | 版本    | 说明             |
-| --------------- | ------- | ---------------- |
-| Spring Boot     | 2.7.12  | 核心框架         |
-| Spring Security | -       | 安全框架         |
-| MyBatis-Plus    | 3.5.3.1 | ORM 框架         |
-| JWT             | 0.9.1   | Token 认证       |
-| Redis           | -       | 缓存/Session管理 |
-| HikariCP        | -       | 数据库连接池     |
-| Hutool          | 5.8.26  | Java 工具类库    |
-| Swagger         | 3.0.0   | API 文档         |
+| 技术              | 版本   | 说明                               |
+| :---------------- | :----- | :--------------------------------- |
+| Spring Boot       | 2.7.12 | 核心基础框架                       |
+| MyBatis-Flex      | 1.11.6 | 新一代 Java ORM 框架，支持流式查询 |
+| Spring Security   | -      | 安全拦截与授权                     |
+| JWT (jjwt)        | 0.9.1  | 用户令牌签发与校验                 |
+| Redis             | -      | 权限缓存与会话控制                 |
+| Hutool            | 5.8.26 | 强大的 Java 工具类库               |
+| SpringDoc OpenAPI | 1.8.0  | API 在线文档                       |
 
 ### 前端技术栈 (admin-fe)
 
-| 技术         | 版本   | 说明      |
-| ------------ | ------ | --------- |
-| Vue.js       | 3.5    | 前端框架  |
-| Vite         | 5.4    | 构建工具  |
-| Element Plus | 2.10.2 | UI 组件库 |
-| Pinia        | 2.3.1  | 状态管理  |
-| Vue Router   | 4.5    | 路由管理  |
-| TypeScript   | 5.5    | 类型支持  |
-| TailwindCSS  | 3.4    | CSS 框架  |
+| 技术         | 版本   | 说明                   |
+| :----------- | :----- | :--------------------- |
+| Vue.js       | 3.5.x  | 渐进式 JavaScript 框架 |
+| Vite         | 5.4.x  | 高性能前端构建工具     |
+| Element Plus | 2.10.2 | 桌面端 UI 组件库       |
+| Cool-CRUD    | 8.x    | 强大的 CRUD 开发插件   |
+| TypeScript   | 5.5.x  | 静态类型支持           |
+| TailwindCSS  | 3.4.x  | 原子化 CSS 框架        |
 
 ## 📁 项目结构
 
-```
+```text
 Simple-Admin/
-├── admin-backend/          # 后端服务 (Spring Boot)
-│   ├── src/main/java/com/cool/
-│   │   ├── core/           # 核心模块
-│   │   │   ├── annotation/ # 自定义注解
-│   │   │   ├── base/       # 基础类
-│   │   │   ├── cache/      # 缓存配置
-│   │   │   ├── config/     # 系统配置
-│   │   │   ├── enums/      # 枚举类型
-│   │   │   ├── exception/  # 异常处理
-│   │   │   ├── security/   # 安全模块（JWT）
-│   │   │   └── util/       # 工具类
-│   │   └── modules/base/   # 业务模块
-│   │       ├── controller/ # 控制器
-│   │       ├── entity/     # 实体类
-│   │       ├── mapper/     # 数据映射
-│   │       └── service/    # 业务服务
-│   ├── pom.xml
-│   └── Dockerfile
+├── admin-backend/              # 后端服务 (Spring Boot)
+│   ├── src/main/java/com/simple/
+│   │   ├── core/               # 核心底层
+│   │   │   ├── security/       # JWT 与安全配置
+│   │   │   └── util/           # 封装工具类
+│   │   └── modules/base/       # 基础业务模块
+│   │       ├── controller/     # 接口层
+│   │       ├── entity/         # MyBatis-Flex 实体
+│   │       └── service/        # 业务逻辑
+│   └── pom.xml                 # Maven 配置
 │
-└── admin-fe/               # 前端服务 (Vue 3)
+└── admin-fe/                   # 前端服务 (Vue 3)
     ├── src/
-    │   ├── modules/base/   # 基础模块
-    │   │   ├── components/ # 组件
-    │   │   ├── views/      # 页面视图
-    │   │   └── store/      # 状态管理
-    │   ├── plugins/        # 插件
-    │   └── config/         # 配置
-    ├── package.json
-    └── vite.config.ts
+    │   ├── modules/base/       # 基础管理页面
+    │   │   ├── views/          # 用户/角色/菜单等视图
+    │   └── cool/               # Cool-CRUD 核心配置
+    ├── tailwind.config.js      # Tailwind 配置
+    └── vite.config.ts          # Vite 配置文件
 ```
 
 ## 🚀 快速开始
 
-### 环境要求
+### 运行环境
 
-- **Java** 1.8+
-- **Node.js** 18+
-- **pnpm** 8+
-- **MySQL** 5.7+ 或 **PostgreSQL** 12+
-- **Redis** 6+
+- **JDK**: 1.8+
+- **Node.js**: 18.x+ (建议使用 pnpm)
+- **数据库**: PostgreSQL (推荐) 或 MySQL 5.7+
+- **Redis**: 6.0+
 
-### 后端启动
+### 1. 数据库准备
+
+1. 创建数据库 `simple_admin`。
+2. 执行项目根目录下的 `db.sql` 导入表结构及基础数据。
+
+### 2. 后端启动
 
 ```bash
-# 进入后端目录
 cd admin-backend
-
-# 配置数据库连接（修改 application-local.yml）
-# 编译并运行
-mvn spring-boot:run
+# 修改 application-local.yml 中的数据库及 Redis 连接信息
+mvn clean spring-boot:run
 ```
 
-### 前端启动
+### 3. 前端启动
 
 ```bash
-# 进入前端目录
 cd admin-fe
-
-# 安装依赖
 pnpm install
-
-# 启动开发服务器
 pnpm dev
 ```
 
-### 访问地址
+## 🔗 访问路径
 
-- 前端页面: http://localhost:9000
-- 后端 API: http://localhost:8001
-- Swagger 文档: http://localhost:8001/swagger-ui/
+- **管理后台**: `http://localhost:9000` (默认账号: admin / 123456)
+- **API 文档**: `http://localhost:8001/swagger-ui/index.html`
 
-## 🔑 核心功能模块
+## 📊 数据库设计
 
-### 1. JWT 权限验证
+系统核心表均以 `base_sys_` 为前缀，包含：
 
-- 用户登录/登出
-- Token 刷新机制
-- 接口权限拦截
-- 安全退出机制
-
-### 2. RBAC 菜单管理
-
-- 菜单的 CRUD 操作
-- 菜单权限配置
-- 按钮级别权限控制
-- 动态路由生成
-
-### 3. 系统管理
-
-| 功能     | 说明                         |
-| -------- | ---------------------------- |
-| 用户管理 | 系统用户的增删改查、状态管理 |
-| 角色管理 | 角色权限配置、菜单权限分配   |
-| 部门管理 | 组织架构管理、部门层级配置   |
-| 参数配置 | 系统参数的动态配置           |
-| 操作日志 | 系统操作日志记录与查询       |
-
-## 📊 数据库表设计
-
-| 表名                | 说明           |
-| ------------------- | -------------- |
-| sys_user            | 系统用户表     |
-| sys_role            | 角色表         |
-| sys_menu            | 菜单表         |
-| sys_department      | 部门表         |
-| sys_user_role       | 用户角色关联表 |
-| sys_role_menu       | 角色菜单关联表 |
-| sys_role_department | 角色部门关联表 |
-| sys_log             | 操作日志表     |
-| sys_param           | 系统参数表     |
-
-## 🐳 Docker 部署
-
-```bash
-# 后端构建镜像
-cd admin-backend
-docker build -t simple-admin-backend .
-
-# 使用 Docker Compose
-docker-compose up -d
-```
+- `base_sys_user`: 用户信息与状态
+- `base_sys_role`: 角色定义与权限关联
+- `base_sys_menu`: 菜单树与权限标识
+- `base_sys_department`: 组织架构管理
+- `base_sys_log`: 系统操作审计日志
 
 ## 📄 许可证
 
-本项目基于 [MIT License](LICENSE) 开源协议。
-
-## 🙏 致谢
-
-- [Cool Admin](https://cool-js.com/) - 感谢提供的优秀基础框架
-- [Element Plus](https://element-plus.org/) - Vue 3 组件库
-- [Spring Boot](https://spring.io/projects/spring-boot) - Java 快速开发框架
-
----
-
-<p align="center">
-  Made with ❤️ by Simple Admin Team
-</p>
+本项目采用 [MIT License](LICENSE) 许可协议。
