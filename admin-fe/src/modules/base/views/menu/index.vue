@@ -197,9 +197,7 @@ const Table = useTable({
       label: t("权限"),
       headerAlign: "center",
       minWidth: 300,
-      component: {
-        name: "cl-dict",
-      },
+      showOverflowTooltip: true,
     },
     {
       prop: "orderNum",

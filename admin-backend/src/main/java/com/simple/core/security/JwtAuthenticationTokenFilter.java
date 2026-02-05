@@ -8,7 +8,7 @@ import com.simple.core.enums.UserTypeEnum;
 import com.simple.core.security.jwt.JwtTokenUtil;
 import com.simple.core.security.jwt.JwtUser;
 import com.simple.core.util.PathUtils;
-import io.jsonwebtoken.Claims;
+import cn.hutool.jwt.JWT;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -51,9 +51,9 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
         String authToken = request.getHeader("Authorization");
         if (StrUtil.isNotEmpty(authToken)) {
-            Claims claims = jwtTokenUtil.getTokenInfo(authToken);
+            JWT claims = jwtTokenUtil.getTokenInfo(authToken);
             if (claims != null) {
-                Object userType = claims.get("userType");
+                Object userType = claims.getPayload("userType");
                 if (Objects.equals(userType, UserTypeEnum.APP.name())) {
                     // APP 用户
                     handleAppRequest(request, claims, authToken);
@@ -69,8 +69,9 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     /**
      * 处理 APP 请求
      */
-    private void handleAppRequest(HttpServletRequest request, Claims claims, String authToken) {
-        String userId = claims.get("userId").toString();
+    private void handleAppRequest(HttpServletRequest request, JWT claims, String authToken) {
+        Object userIdObj = claims.getPayload("userId");
+        String userId = userIdObj != null ? userIdObj.toString() : null;
         if (ObjectUtil.isNotEmpty(userId)
                 && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = cacheUtil.get("app:userDetails:" + userId, JwtUser.class);
@@ -79,7 +80,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
                         userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                request.setAttribute("userId", claims.get("userId"));
+                request.setAttribute("userId", claims.getPayload("userId"));
                 request.setAttribute("tokenInfo", claims);
             }
         }
@@ -88,12 +89,13 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     /**
      * 处理 Admin 请求
      */
-    private void handleAdminRequest(HttpServletRequest request, Claims claims, String authToken) {
-        String username = claims.get("username").toString();
+    private void handleAdminRequest(HttpServletRequest request, JWT claims, String authToken) {
+        Object usernameObj = claims.getPayload("username");
+        String username = usernameObj != null ? usernameObj.toString() : null;
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = cacheUtil.get("admin:userDetails:" + username, JwtUser.class);
-            Integer passwordV = Convert.toInt(claims.get("passwordVersion"));
-            Integer rv = cacheUtil.get("admin:passwordVersion:" + claims.get("userId"), Integer.class);
+            Integer passwordV = Convert.toInt(claims.getPayload("passwordVersion"));
+            Integer rv = cacheUtil.get("admin:passwordVersion:" + claims.getPayload("userId"), Integer.class);
 
             if (jwtTokenUtil.validateToken(authToken, username)
                     && Objects.equals(passwordV, rv)
@@ -102,8 +104,8 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
                         userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                request.setAttribute("adminUsername", claims.get("username"));
-                request.setAttribute("adminUserId", claims.get("userId"));
+                request.setAttribute("adminUsername", claims.getPayload("username"));
+                request.setAttribute("adminUserId", claims.getPayload("userId"));
                 request.setAttribute("tokenInfo", claims);
             }
         }

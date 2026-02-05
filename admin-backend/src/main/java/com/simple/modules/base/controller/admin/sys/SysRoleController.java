@@ -68,9 +68,11 @@ public class SysRoleController {
         QueryWrapper wrapper = QueryWrapper.create();
         // 非 admin 用户只能看到自己创建的角色
         Long adminUserId = SecurityUtil.getCurrentUserId();
-        SysUserEntity user = baseSysUserService.getById(adminUserId);
-        if (user != null && !"admin".equals(user.getUsername())) {
-            wrapper.where(SysRoleEntity::getUserId).eq(adminUserId);
+        if (adminUserId != null) {
+            SysUserEntity user = baseSysUserService.getById(adminUserId);
+            if (user != null && !"admin".equals(user.getUsername())) {
+                wrapper.where(SysRoleEntity::getUserId).eq(adminUserId);
+            }
         }
         wrapper.orderBy(SysRoleEntity::getCreateTime).desc();
         return RestResult.ok(baseSysRoleService.list(wrapper));
@@ -85,9 +87,11 @@ public class SysRoleController {
         QueryWrapper wrapper = QueryWrapper.create();
         // 非 admin 用户只能看到自己创建的角色
         Long adminUserId = SecurityUtil.getCurrentUserId();
-        SysUserEntity user = baseSysUserService.getById(adminUserId);
-        if (user != null && !"admin".equals(user.getUsername())) {
-            wrapper.where(SysRoleEntity::getUserId).eq(adminUserId);
+        if (adminUserId != null) {
+            SysUserEntity user = baseSysUserService.getById(adminUserId);
+            if (user != null && !"admin".equals(user.getUsername())) {
+                wrapper.where(SysRoleEntity::getUserId).eq(adminUserId);
+            }
         }
         // 关键词搜索
         if (params.get("keyWord") != null) {

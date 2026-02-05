@@ -4,6 +4,7 @@ import cn.hutool.core.lang.Dict;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import com.mybatisflex.core.query.QueryMethods;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.row.Row;
 import com.simple.core.cache.CacheUtil;
@@ -108,16 +109,16 @@ public class SysPermsServiceImpl implements SysPermsService {
 
     @Override
     public Long[] getRoles(SysUserEntity userEntity) {
-        Long[] roleIds = null;
-        if (!"admin".equals(userEntity.getUsername())) {
-            List<SysUserRoleEntity> list = baseSysUserRoleMapper
-                    .selectListByQuery(QueryWrapper.create().where(SysUserRoleEntity::getUserId).eq(userEntity.getId()));
-            roleIds = list.stream().map(SysUserRoleEntity::getRoleId).toArray(Long[]::new);
-            if (Arrays.asList(roleIds).contains(1L)) {
-                roleIds = null;
-            }
+        if (userEntity == null) {
+            return new Long[0];
         }
-        return roleIds;
+        // admin 账号默认拥有超级管理员角色 (ID: 1)
+        if ("admin".equals(userEntity.getUsername())) {
+            return new Long[]{1L};
+        }
+        List<SysUserRoleEntity> list = baseSysUserRoleMapper
+                .selectListByQuery(QueryWrapper.create().where(SysUserRoleEntity::getUserId).eq(userEntity.getId()));
+        return list.stream().map(SysUserRoleEntity::getRoleId).toArray(Long[]::new);
     }
 
     @Override
@@ -142,18 +143,20 @@ public class SysPermsServiceImpl implements SysPermsService {
         if (roleIds != null && Arrays.asList(roleIds).contains(1L)) {
             roleIds = null;
         }
-        if (roleIds != null && roleIds.length == 0) {
-            return new ArrayList<>();
-        }
 
-        QueryWrapper queryWrapper = QueryWrapper.create()
-                .select("a.*")
-                .from("base_sys_menu").as("a");
-        if (ObjectUtil.isNotEmpty(roleIds)) {
-            queryWrapper.leftJoin("base_sys_role_menu").as("b").on("a.id = b.menu_id")
-                    .where(com.mybatisflex.core.query.QueryMethods.column("b.role_id").in(Arrays.asList(roleIds)));
+        QueryWrapper queryWrapper = QueryWrapper.create();
+        if (roleIds == null) {
+            // 超级管理员，获取所有菜单
+        } else if (roleIds.length == 0) {
+            return new ArrayList<>();
+        } else {
+            queryWrapper.select("a.*").from("base_sys_menu").as("a")
+                    .leftJoin("base_sys_role_menu").as("b").on("a.id = b.menu_id")
+                    .where(QueryMethods.column("b.role_id").in(Arrays.asList(roleIds)))
+                    .groupBy("a.id");
         }
-        return baseSysMenuMapper.selectListByQuery(queryWrapper.groupBy("a.id").orderBy("a.order_num", true));
+        queryWrapper.orderBy(SysMenuEntity::getOrderNum, true);
+        return baseSysMenuMapper.selectListByQuery(queryWrapper);
     }
 
     @Override
@@ -175,7 +178,8 @@ public class SysPermsServiceImpl implements SysPermsService {
 
     @Override
     public Dict permmenu(Long adminUserId) {
-        return Dict.create().set("menus", getMenus(adminUserId)).set("perms", getPerms(adminUserId));
+        Long[] roleIds = getRoles(adminUserId);
+        return Dict.create().set("menus", getMenus(roleIds)).set("perms", getPerms(roleIds));
     }
 
     @Override

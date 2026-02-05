@@ -50,7 +50,7 @@ public class UserDetailsService implements org.springframework.security.core.use
         // 增加 ADMIN 角色
         authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
 
-        JwtUser jwtUser = new JwtUser(user.getUsername(), user.getPassword(), authorities);
+        JwtUser jwtUser = new JwtUser(user.getId(), user.getUsername(), user.getPassword(), authorities);
 
         // 缓存用户信息
         cacheUtil.set("admin:userDetails:" + username, jwtUser);

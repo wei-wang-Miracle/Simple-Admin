@@ -16,6 +16,7 @@ import java.util.List;
 @Setter
 @Table(value = "base_sys_menu", comment = "系统菜单表")
 public class SysMenuEntity extends BaseEntity<SysMenuEntity> {
+    @Column("parent_id")
     @ColumnDefine(comment = "父菜单ID", type = "bigint")
     private Long parentId;
 
@@ -43,6 +44,7 @@ public class SysMenuEntity extends BaseEntity<SysMenuEntity> {
     @ColumnDefine(comment = "路由缓存", defaultValue = "true")
     private Boolean keepAlive;
 
+    @Column("is_show")
     @ColumnDefine(comment = "是否显示", defaultValue = "true")
     private Boolean isShow;
 

@@ -4,6 +4,7 @@ import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.fastjson2.JSON;
 import com.simple.core.cache.CacheUtil;
+import com.simple.core.security.jwt.JwtUser;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -58,17 +59,11 @@ public class SecurityUtil {
      * @return 系统用户ID，如果未登录则返回null
      */
     public static Long getCurrentUserId() {
-        try {
-            UserDetails userDetails = getCurrentUser();
-            if (userDetails == null) {
-                return null;
-            }
-            // 将 Java 对象转换为 JSONObject 对象
-            JSONObject jsonObject = (JSONObject) JSON.toJSON(userDetails);
-            return jsonObject.getJSONObject("user").getLong("id");
-        } catch (Exception e) {
-            return null;
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof JwtUser) {
+            return ((JwtUser) authentication.getPrincipal()).getUserId();
         }
+        return null;
     }
 
     /**

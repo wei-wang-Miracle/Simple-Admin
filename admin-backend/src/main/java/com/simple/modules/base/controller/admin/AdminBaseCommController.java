@@ -33,6 +33,8 @@ public class AdminBaseCommController {
         if (user != null) {
             user.setPassword(null);
             user.setPasswordV(null);
+            // 补充角色列表
+            user.setRoleIdList(java.util.Arrays.asList(baseSysPermsService.getRoles(adminUserId)));
         }
         return RestResult.ok(user);
     }

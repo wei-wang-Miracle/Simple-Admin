@@ -12,6 +12,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,11 @@ public class SysUserController {
         if (user != null) {
             // 获取用户角色
             Long[] roleIds = baseSysPermsService.getRoles(user.getId());
-            user.setRoleIdList(Arrays.asList(roleIds));
+            if (roleIds != null) {
+                user.setRoleIdList(Arrays.asList(roleIds));
+            } else {
+                user.setRoleIdList(new ArrayList<>());
+            }
             // 清除敏感信息
             user.setPassword(null);
         }

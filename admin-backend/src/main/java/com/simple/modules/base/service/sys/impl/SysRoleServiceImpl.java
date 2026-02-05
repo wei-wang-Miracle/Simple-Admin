@@ -15,6 +15,7 @@ import com.simple.modules.base.service.sys.SysPermsService;
 import com.simple.modules.base.service.sys.SysRoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
@@ -69,13 +70,37 @@ public class SysRoleServiceImpl
     }
 
     @Override
-    public Object list(JSONObject requestParams, QueryWrapper queryWrapper) {
-        return sysRoleMapper.selectListByQuery(queryWrapper.ne(SysRoleEntity::getId, 1L).and(qw -> {
-            JSONObject object = SecurityUtil.getAdminUserInfo(requestParams);
-            qw.eq(SysRoleEntity::getUserId, object.get("userId")).or(w -> {
-                w.in(SysRoleEntity::getId,
-                        (Object) object.get("roleIds", Long[].class));
-            });
-        }, !SecurityUtil.getCurrentUsername().equals("admin")));
+    @Transactional(rollbackFor = Exception.class)
+    public boolean save(SysRoleEntity entity) {
+        SysRoleEntity checkLabel = getOne(QueryWrapper.create().eq(SysRoleEntity::getLabel, entity.getLabel()));
+        if (checkLabel != null) {
+            throw new SimpleException("标识已存在");
+        }
+        if (entity.getUserId() == null) {
+            entity.setUserId(SecurityUtil.getCurrentUserId());
+        }
+        boolean result = super.save(entity);
+        if (result) {
+            updateRolePerms(entity);
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateById(SysRoleEntity entity) {
+        boolean result = super.updateById(entity);
+        if (result) {
+            updateRolePerms(entity);
+        }
+        return result;
+    }
+
+    private void updateRolePerms(SysRoleEntity entity) {
+        if (entity.getMenuIdList() != null || entity.getDepartmentIdList() != null) {
+            sysPermsService.updatePerms(entity.getId(),
+                    entity.getMenuIdList() == null ? new Long[0] : entity.getMenuIdList().toArray(new Long[0]),
+                    entity.getDepartmentIdList() == null ? new Long[0] : entity.getDepartmentIdList().toArray(new Long[0]));
+        }
     }
 }

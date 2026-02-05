@@ -1,6 +1,8 @@
 package com.simple.core.security.jwt;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -11,19 +13,17 @@ import java.util.Collection;
  * JWT 用户信息
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class JwtUser implements UserDetails, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private final String username;
-    private final String password;
-    private final Collection<? extends GrantedAuthority> authorities;
+    private Long userId;
+    private String username;
+    private String password;
+    private Collection<? extends GrantedAuthority> authorities;
 
-    public JwtUser(String username, String password, Collection<? extends GrantedAuthority> authorities) {
-        this.username = username;
-        this.password = password;
-        this.authorities = authorities;
-    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
